@@ -25,14 +25,16 @@ A relative path to a downloaded `.xsd` works too. Editors with XSD support will 
 ## Validate with .NET
 
 ```csharp
+using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Schema;
 
 var schemas = new XmlSchemaSet();
-schemas.Add(null, args[0]);
+schemas.Add(null, "ManiaPlanet/manialink.xsd");
 
-// Throws an XmlException if the XML is not well-formed
-var doc = XDocument.Load(args[1], LoadOptions.PreserveWhitespace | LoadOptions.SetLineInfo);
+// Throws an XmlException if the XML is not well-formed or has a DOCTYPE
+using var reader = XmlReader.Create("page.xml");
+var doc = XDocument.Load(reader, LoadOptions.PreserveWhitespace | LoadOptions.SetLineInfo);
 
 // .NET does not validate elements in unknown namespaces, so the root must not have one
 var valid = doc.Root!.Name.Namespace == XNamespace.None;
