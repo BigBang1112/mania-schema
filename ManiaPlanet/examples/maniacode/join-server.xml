@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Add a server to the favorites, then join it as a spectator.
+  join_server also takes <ip>203.0.113.10:2350</ip> instead of login. add_favorite does not.
+  connection_type: 1 = play, 2 = spectate, 3 = referee.
+-->
+<maniacode xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="../../maniacode.xsd">
+  <add_favorite>
+    <login>example_server</login>
+  </add_favorite>
+  <join_server>
+    <login>example_server</login>
+    <password>example-password</password>
+    <connection_type>2</connection_type>
+  </join_server>
+</maniacode>

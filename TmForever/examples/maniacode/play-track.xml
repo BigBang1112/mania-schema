@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Play a track.
+  A local track with this uid is used if there is one, otherwise it is downloaded from url.
+  Text is not trimmed, so keep each URL on one line with its tags.
+-->
+<maniacode noconfirmation="1"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="../../maniacode.xsd">
+  <play_track>
+    <name>Example Track</name>
+    <uid>ExampleTrackUid000000000000</uid>
+    <url>http://example.com/tracks/example.Challenge.Gbx</url>
+  </play_track>
+</maniacode>

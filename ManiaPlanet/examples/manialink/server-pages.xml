@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Several pages sent by a game server in one envelope, plus built-in HUD visibility.
+  Action parameters follow the name, separated by apostrophes.
+-->
+<manialinks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:noNamespaceSchemaLocation="../../manialink.xsd">
+  <manialink version="3" id="vote" layer="Normal">
+    <frame pos="110 60">
+      <quad size="44 22" bgcolor="102030C0"/>
+      <label pos="22 -6" z-index="1" size="40 6" halign="center" valign="center2"
+             textsize="2" text="Skip this map?"/>
+      <label pos="12 -16" z-index="1" size="18 7" halign="center" valign="center2"
+             textsize="2" focusareacolor1="063" focusareacolor2="096"
+             action="vote'yes" text="Yes"/>
+      <label pos="32 -16" z-index="1" size="18 7" halign="center" valign="center2"
+             textsize="2" focusareacolor1="600" focusareacolor2="900"
+             action="vote'no" text="No"/>
+    </frame>
+  </manialink>
+
+  <manialink version="3" id="scores-title" layer="ScoresTable">
+    <label pos="0 80" size="160 10" halign="center" textsize="4" text="Example Cup"/>
+  </manialink>
+
+  <custom_ui>
+    <round_scores visible="false"/>
+    <chat visible="true"/>
+  </custom_ui>
+</manialinks>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Pages sent by a game server.
+  A page replaces the one with the same id, so the empty page removes "welcome".
+  actionkey 1, 2 and 3 are the keys bound to spectator camera follow, free and replay.
+  When custom_ui is present, modules it does not list become visible again.
+-->
+<manialinks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:noNamespaceSchemaLocation="../../manialink.xsd">
+  <manialink id="vote">
+    <frame posn="40 30 0">
+      <quad sizen="22 13" bgcolor="123C"/>
+      <label posn="11 -3 1" sizen="20 4" halign="center" valign="center"
+             textsize="2" text="Skip this track?"/>
+      <label posn="6 -9 1" sizen="9 4" halign="center" valign="center" textsize="2"
+             focusareacolor1="063" focusareacolor2="096" action="101" actionkey="1" text="Yes"/>
+      <label posn="16 -9 1" sizen="9 4" halign="center" valign="center" textsize="2"
+             focusareacolor1="600" focusareacolor2="900" action="102" actionkey="2" text="No"/>
+    </frame>
+  </manialink>
+  <manialink id="welcome"/>
+  <custom_ui>
+    <round_scores visible="false"/>
+    <chat visible="true"/>
+  </custom_ui>
+</manialinks>

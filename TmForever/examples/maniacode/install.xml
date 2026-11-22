@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  All install actions.
+  These are restricted: the ManiaCode has to come from a short code resolved by the master server,
+  and the account needs the "Maniacodes" feature.
+  Opened from a plain URL, the whole document is refused.
+-->
+<maniacode xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="../../maniacode.xsd">
+  <install_track>
+    <name>Example Track</name>
+    <url>http://example.com/tracks/example.Challenge.Gbx</url>
+  </install_track>
+  <install_track_pack>
+    <name>Example Cup</name>
+    <track>
+      <name>Round 1</name>
+      <url>http://example.com/tracks/round-1.Challenge.Gbx</url>
+    </track>
+    <track>
+      <name>Round 2</name>
+      <url>http://example.com/tracks/round-2.Challenge.Gbx</url>
+    </track>
+  </install_track_pack>
+  <install_replay>
+    <name>Example Replay</name>
+    <url>http://example.com/replays/example.Replay.Gbx</url>
+  </install_replay>
+  <install_skin>
+    <name>Example Skin</name>
+    <file>Skins/Vehicles/CarCommon/Example.zip</file>
+    <url>http://example.com/skins/Example.zip</url>
+  </install_skin>
+</maniacode>

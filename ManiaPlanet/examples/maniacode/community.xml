@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Actions that have no install restrictions.
+  The url of get_skin must itself end in an allowed file extension.
+  timeout is the cache lifetime of this document in seconds.
+-->
+<maniacode xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="../../maniacode.xsd">
+  <timeout>3600</timeout>
+  <show_message>
+    <message>Welcome to the $o$09fExample$z community!</message>
+  </show_message>
+  <get_skin>
+    <name>Example Skin</name>
+    <file>Skins/Models/CanyonCar/Example.zip</file>
+    <url>https://example.com/skins/Example.zip</url>
+  </get_skin>
+  <add_buddy>
+    <login>example_player</login>
+  </add_buddy>
+  <invite_buddy>
+    <email>friend@example.com</email>
+  </invite_buddy>
+  <goto>
+    <link>https://example.com/community.xml</link>
+  </goto>
+</maniacode>

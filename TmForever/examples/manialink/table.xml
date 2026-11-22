@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  A table layout.
+  width and height are in raw units (1 raw unit = 64 posn units).
+  A format at the root affects the tables after it.
+  Do not write text directly inside a cell: it would be read as the URL of its background image.
+-->
+<manialink xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="../../manialink.xsd">
+  <background bgcolor="123E" bgborderx="0.02" bgbordery="0.02"/>
+  <format textsize="2" textcolor="FFF"/>
+  <line height="0.1">
+    <cell width="0.2" bgcolor="06C"><text halign="center">Rank</text></cell>
+    <cell width="0.6" bgcolor="06C"><text>Player</text></cell>
+    <cell width="0.3" bgcolor="06C"><text halign="right">Time</text></cell>
+  </line>
+  <line height="0.1">
+    <cell width="0.2"><text halign="center">1</text></cell>
+    <cell width="0.6"><text>example_player</text></cell>
+    <cell width="0.3"><text halign="right">0:42.12</text></cell>
+  </line>
+  <line height="0.1">
+    <cell width="0.2"><text halign="center">2</text></cell>
+    <cell width="0.6"><text>another_player</text></cell>
+    <cell width="0.3"><text halign="right">0:43.05</text></cell>
+  </line>
+</manialink>

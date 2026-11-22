@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  A click counter in ManiaScript.
+  scriptevents works by presence alone: omit it to disable events.
+  data-* attributes pass values from the markup to the script.
+-->
+<manialink version="3"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="../../manialink.xsd">
+  <label id="counter" pos="0 12" size="80 10" halign="center" valign="center2"
+         textsize="5" text="0"/>
+  <label id="button" pos="0 -8" size="50 10" halign="center" valign="center2"
+         textsize="2" focusareacolor1="06C" focusareacolor2="09F"
+         scriptevents="1" data-step="5" text="Add"/>
+
+  <script><![CDATA[
+#Include "TextLib" as TL
+
+main() {
+  declare CMlLabel Counter <=> (Page.GetFirstChild("counter") as CMlLabel);
+  declare CMlLabel Button <=> (Page.GetFirstChild("button") as CMlLabel);
+  declare Integer Step = TL::ToInteger(Button.DataAttributeGet("step"));
+  declare Integer Total = 0;
+
+  while (True) {
+    yield;
+    foreach (Event in PendingEvents) {
+      if (Event.Type == CMlScriptEvent::Type::MouseClick && Event.ControlId == "button") {
+        Total += Step;
+        Counter.SetText(TL::ToText(Total));
+      }
+    }
+  }
+}
+]]></script>
+</manialink>

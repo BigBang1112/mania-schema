@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  All install actions.
+  These are restricted: the ManiaCode has to come from a short code resolved by the master server
+  (or be a direct file link created by the game), and the account needs the "Maniacodes" feature.
+  Opened from a plain URL, the whole document is refused.
+-->
+<maniacode xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="../../maniacode.xsd">
+  <install_map>
+    <name>Example Map</name>
+    <url>https://example.com/maps/example.Map.Gbx</url>
+  </install_map>
+  <install_map_pack>
+    <name>Example Cup</name>
+    <map>
+      <name>Round 1</name>
+      <url>https://example.com/maps/round-1.Map.Gbx</url>
+    </map>
+    <map>
+      <name>Round 2</name>
+      <url>https://example.com/maps/round-2.Map.Gbx</url>
+    </map>
+  </install_map_pack>
+  <install_replay>
+    <name>Example Replay</name>
+    <url>https://example.com/replays/example.Replay.Gbx</url>
+  </install_replay>
+  <install_skin>
+    <name>Example Skin</name>
+    <file>Skins/Models/CanyonCar/Example.zip</file>
+    <url>https://example.com/skins/Example.zip</url>
+  </install_skin>
+  <install_pack>
+    <name>Example Title</name>
+    <file>Packs/Example.Title.Pack.Gbx</file>
+    <url>https://example.com/packs/Example.Title.Pack.Gbx</url>
+  </install_pack>
+  <install_item>
+    <name>Example Item</name>
+    <file>Items/Example.Item.Gbx</file>
+    <url>https://example.com/items/Example.Item.Gbx</url>
+  </install_item>
+  <install_block>
+    <name>Example Block</name>
+    <file>Blocks/Example.Block.Gbx</file>
+    <url>https://example.com/blocks/Example.Block.Gbx</url>
+  </install_block>
+  <install_macroblock>
+    <name>Example Macroblock</name>
+    <file>Blocks/Example.Macroblock.Gbx</file>
+    <url>https://example.com/blocks/Example.Macroblock.Gbx</url>
+  </install_macroblock>
+  <install_script>
+    <name>Example Script</name>
+    <file>Scripts/Example.Script.txt</file>
+    <url>https://example.com/scripts/Example.Script.txt</url>
+  </install_script>
+</maniacode>

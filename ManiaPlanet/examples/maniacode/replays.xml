@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Watch a replay, then play against it.
+  Actions run in document order.
+-->
+<maniacode xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="../../maniacode.xsd">
+  <view_replay>
+    <name>Example Replay</name>
+    <url>https://example.com/replays/example.Replay.Gbx</url>
+  </view_replay>
+  <play_replay>
+    <name>Example Replay</name>
+    <url>https://example.com/replays/example.Replay.Gbx</url>
+  </play_replay>
+</maniacode>

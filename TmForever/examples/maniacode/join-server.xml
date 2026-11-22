@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Add a server to the favourites, then join it.
+  join_server also takes <ip>203.0.113.10:2350</ip> instead of login.
+  There is no password or spectator option, and only the spelling add_favourite exists.
+-->
+<maniacode xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="../../maniacode.xsd">
+  <add_favourite>
+    <login>example_server</login>
+  </add_favourite>
+  <join_server>
+    <login>example_server</login>
+  </join_server>
+</maniacode>

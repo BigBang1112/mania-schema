@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  A form sent by a game server.
+  Clicking the button sends the action to the server, along with the values of the named inputs.
+-->
+<manialink version="3" id="feedback"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="../../manialink.xsd">
+  <quad pos="0 0" size="140 100" halign="center" valign="center" bgcolor="102030E0"/>
+  <frame pos="-60 42" z-index="1">
+    <label size="120 6" textsize="2" text="Subject"/>
+    <entry pos="0 -7" size="120 8" name="subject" default="Map feedback"/>
+
+    <label pos="0 -19" size="120 6" textsize="2" text="Message"/>
+    <textedit pos="0 -26" size="120 24" name="message" autonewline="1" maxline="5"/>
+
+    <label pos="0 -54" size="120 6" textsize="2" text="Map"/>
+    <fileentry pos="0 -61" size="120 8" name="map" type="map" folder="Maps"/>
+
+    <label pos="60 -80" size="50 8" halign="center" valign="center2" textsize="2"
+           focusareacolor1="06C" focusareacolor2="09F" action="send_feedback" text="Send"/>
+  </frame>
+</manialink>

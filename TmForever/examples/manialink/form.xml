@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  A browser form.
+  A link parameter whose value equals the name of an entry gets that value: here q=search.
+  post(address,name) uploads the file chosen in the fileentry with that name.
+-->
+<manialink xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="../../manialink.xsd">
+  <quad posn="0 0 0" sizen="76 40" halign="center" valign="center" bgcolor="123E"/>
+  <frame posn="-34 15 1">
+    <label sizen="68 4" textsize="2" text="Find a track"/>
+    <entry posn="0 -5 0" sizen="48 5" name="search"/>
+    <label posn="59 -7.5 0" sizen="18 5" halign="center" valign="center" textsize="2"
+           focusareacolor1="06C" focusareacolor2="09F"
+           manialink="http://example.com/search.xml?q=search" text="Search"/>
+
+    <label posn="0 -16 0" sizen="68 4" textsize="2" text="Upload a replay"/>
+    <fileentry posn="0 -21 0" sizen="48 5" name="replay" type="replay" folder="Tracks/Replays/"/>
+    <label posn="59 -23.5 0" sizen="18 5" halign="center" valign="center" textsize="2"
+           focusareacolor1="06C" focusareacolor2="09F"
+           url="post(http://example.com/upload,replay)" text="Upload"/>
+  </frame>
+</manialink>

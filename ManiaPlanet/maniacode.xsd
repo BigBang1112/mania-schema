@@ -1,0 +1,761 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ManiaPlanet ManiaCode XML schema (XSD 1.0, no target namespace)
+
+  Derived by static analysis of ManiaPlanetLogs.exe
+    file version  2019.11.19.1842
+    SHA-256       6AC97A32F75F7BD4242D15DEA986409FFD9809565A3FA8C32FF1068D193DD555
+
+  Use:
+    <maniacode xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:noNamespaceSchemaLocation="maniacode.xsd">
+
+  How the engine handles a document:
+    * All actions are parsed before any runs. One invalid action cancels the whole ManiaCode,
+      and so does a document without any action.
+    * Actions run in document order. When one fails and others remain, the player is asked
+      whether to continue.
+    * A child element may be in any order. If repeated, the first one is used.
+    * Unknown elements and attributes are silently ignored. This schema reports them.
+    * Action names are case-insensitive, child names and the root are case-sensitive.
+      XSD cannot express the former, so this schema accepts lowercase action names only.
+
+  Restrictions on the install_* actions (checked at run time, not expressible in XSD):
+    * The ManiaCode must come from an address resolved by the master server (a short code), or
+      be the one the game creates for a direct link to a file. Otherwise the whole ManiaCode
+      is refused with "Access denied".
+    * TitleControl.ProcessManiaCodeXml refuses any ManiaCode containing one.
+    * The player's account needs the "Maniacodes" feature. Without it the action fails.
+
+  File extensions:
+    Types FileName and FileUrl hold the list built into the executable. The master server can
+    replace that list at run time through its ManiacodeExtensions setting.
+
+  Sources in the binary (image base 140000000):
+    Dispatch             140b442f0  CGameCtnNetwork::ParseManiaCodeScriptXML
+    show_message         140b45050  ParseShowMessageAction
+    goto                 140b432f0  ParseGoToAction
+    install_map          140b43380  ParseInstallMapAction
+    install_map_pack     140b43460  ParseInstallMapPackAction
+    install_skin         140b439f0  ParseInstallSkinAction
+    get_skin             140b430f0  ParseGetSkinAction
+    install_pack         140b436e0  ParseInstallPackAction
+    item, block, macroblock, script
+                         140b450e0  ParseStandardActionWithFile
+    play_map             140b44d50  ParsePlayMapAction
+    replay actions       140b45410  ParseStandardDataAction
+    join_server          140b43e30  ParseJoinServerAction
+    add_buddy            140b42ca0  ParseAddBuddyAction
+    invite_buddy         140b43d10  ParseInviteBuddyAction
+    add_favorite         140b42d50  ParseAddFavoriteAction
+    lightmap_url         140b440f0  ParseLightMapForAction
+    timeout              140b489e0  ReadManiaNetResourceTimeOut
+    Access check         140b3dd10  OnManiaCodeFileReceived
+    Script entry point   140e726c0  TitleControl.ProcessManiaCodeXml
+    Execution            140bc4940  CGameCtnApp::ProcessManiaCodeActionsList
+    Values               140b42e00 (URL), 140b30170 (extension), 1416312f0 (IP),
+                         14160ad10 (e-mail), 141607650 (login)
+    Extension list       140aff147 (built in), 140b048d0 (master server override)
+    User folders         141802690  Game_InitUserDrives
+
+  Examples in xs:documentation:
+    They are HTML for the tooltips of XML language servers, which collapse whitespace.
+    Keep each on one line, with &#10; for a line break, &#32; for indentation and &lt; for "<".
+    An annotation on a declaration hides the one on its type. If a declaration has no text of
+    its own, put the example on the type instead.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+  <!-- ============================================================ Document element -->
+
+  <xs:element name="maniacode" type="ManiaCode">
+    <xs:annotation>
+      <xs:documentation>A list of actions for the game to execute.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;maniacode>&#10;&#32;&#32;&lt;show_message>&#10;&#32;&#32;&#32;&#32;&lt;message>Welcome!&lt;/message>&#10;&#32;&#32;&lt;/show_message>&#10;&lt;/maniacode></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:complexType name="ManiaCode">
+    <!-- At least one action, plus at most one timeout in any position. -->
+    <xs:choice>
+      <xs:sequence>
+        <xs:element name="timeout" type="Timeout">
+          <xs:annotation>
+            <xs:documentation>Cache lifetime of the downloaded document, in seconds.</xs:documentation>
+            <xs:documentation><![CDATA[Example:<pre>&lt;timeout>3600&lt;/timeout></pre>]]></xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:group ref="Action" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:sequence>
+        <xs:group ref="Action" maxOccurs="unbounded"/>
+        <xs:sequence minOccurs="0">
+          <xs:element name="timeout" type="Timeout">
+            <xs:annotation>
+              <xs:documentation><![CDATA[Example:<pre>&lt;timeout>3600&lt;/timeout></pre>]]></xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:group ref="Action" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+      </xs:sequence>
+    </xs:choice>
+    <xs:attribute name="noconfirmation" type="IntFlag">
+      <xs:annotation>
+        <xs:documentation>Non-zero hides the final "ManiaCode complete" message. It skips no other confirmation. It must be an integer: "true" reads as 0.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>noconfirmation="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <!-- ============================================================ Actions -->
+
+  <xs:group name="Action">
+    <xs:choice>
+      <xs:element name="show_message" type="ShowMessage">
+        <xs:annotation>
+          <xs:documentation>Show a message to the player.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;show_message>&#10;&#32;&#32;&lt;message>Welcome to $o$09fExample$z!&lt;/message>&#10;&lt;/show_message></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="goto" type="GoTo">
+        <xs:annotation>
+          <xs:documentation>Open a link in the game.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;goto>&#10;&#32;&#32;&lt;link>https://example.com/page.xml&lt;/link>&#10;&lt;/goto></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="play_map" type="PlayMap">
+        <xs:annotation>
+          <xs:documentation>Play a map, found locally by uid or downloaded from url. Needs name and at least one of those two.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;play_map>&#10;&#32;&#32;&lt;name>Example Map&lt;/name>&#10;&#32;&#32;&lt;url>https://example.com/maps/Example.Map.Gbx&lt;/url>&#10;&lt;/play_map></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="play_replay" type="Replay">
+        <xs:annotation>
+          <xs:documentation>Download a replay and play against it.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;play_replay>&#10;&#32;&#32;&lt;name>Example Replay&lt;/name>&#10;&#32;&#32;&lt;url>https://example.com/replays/Example.Replay.Gbx&lt;/url>&#10;&lt;/play_replay></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="view_replay" type="Replay">
+        <xs:annotation>
+          <xs:documentation>Download a replay and watch it.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;view_replay>&#10;&#32;&#32;&lt;name>Example Replay&lt;/name>&#10;&#32;&#32;&lt;url>https://example.com/replays/Example.Replay.Gbx&lt;/url>&#10;&lt;/view_replay></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="get_skin" type="GetSkin">
+        <xs:annotation>
+          <xs:documentation>Download a skin as a cached pack. Unlike install_skin, it has no install restrictions.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;get_skin>&#10;&#32;&#32;&lt;name>Example Skin&lt;/name>&#10;&#32;&#32;&lt;file>Skins/Models/CanyonCar/Example.zip&lt;/file>&#10;&#32;&#32;&lt;url>https://example.com/skins/Example.zip&lt;/url>&#10;&lt;/get_skin></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="join_server" type="JoinServer">
+        <xs:annotation>
+          <xs:documentation>Join a server by login or IP address.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;join_server>&#10;&#32;&#32;&lt;login>example_server&lt;/login>&#10;&#32;&#32;&lt;connection_type>2&lt;/connection_type>&#10;&lt;/join_server></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="add_buddy" type="LoginAction">
+        <xs:annotation>
+          <xs:documentation>Add a player as a buddy.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;add_buddy>&#10;&#32;&#32;&lt;login>example_player&lt;/login>&#10;&lt;/add_buddy></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="invite_buddy" type="InviteBuddy">
+        <xs:annotation>
+          <xs:documentation>Invite someone by e-mail.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;invite_buddy>&#10;&#32;&#32;&lt;email>friend@example.com&lt;/email>&#10;&lt;/invite_buddy></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="add_favorite" type="LoginAction">
+        <xs:annotation>
+          <xs:documentation>Add a server to the favorites. Only login is read: unlike join_server, ip is not supported.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;add_favorite>&#10;&#32;&#32;&lt;login>example_server&lt;/login>&#10;&lt;/add_favorite></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="add_favourite" type="LoginAction">
+        <xs:annotation>
+          <xs:documentation>Alias of add_favorite.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;add_favourite>&#10;&#32;&#32;&lt;login>example_server&lt;/login>&#10;&lt;/add_favourite></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="install_map" type="InstallMap">
+        <xs:annotation>
+          <xs:documentation>Restricted. Download and install a map.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;install_map>&#10;&#32;&#32;&lt;name>Example Map&lt;/name>&#10;&#32;&#32;&lt;url>https://example.com/maps/Example.Map.Gbx&lt;/url>&#10;&lt;/install_map></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="install_map_pack" type="InstallMapPack">
+        <xs:annotation>
+          <xs:documentation>Restricted. Install several maps into Maps/Downloaded/(name).</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;install_map_pack>&#10;&#32;&#32;&lt;name>Example Cup&lt;/name>&#10;&#32;&#32;&lt;map>&#10;&#32;&#32;&#32;&#32;&lt;name>Round 1&lt;/name>&#10;&#32;&#32;&#32;&#32;&lt;url>https://example.com/maps/Round1.Map.Gbx&lt;/url>&#10;&#32;&#32;&lt;/map>&#10;&lt;/install_map_pack></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="install_replay" type="Replay">
+        <xs:annotation>
+          <xs:documentation>Restricted. Download and install a replay.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;install_replay>&#10;&#32;&#32;&lt;name>Example Replay&lt;/name>&#10;&#32;&#32;&lt;url>https://example.com/replays/Example.Replay.Gbx&lt;/url>&#10;&lt;/install_replay></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="install_skin" type="InstallSkin">
+        <xs:annotation>
+          <xs:documentation>Restricted. Install a file under Skins/.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;install_skin>&#10;&#32;&#32;&lt;name>Example Skin&lt;/name>&#10;&#32;&#32;&lt;file>Skins/Models/CanyonCar/Example.zip&lt;/file>&#10;&#32;&#32;&lt;url>https://example.com/skins/Example.zip&lt;/url>&#10;&lt;/install_skin></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="install_pack" type="InstallPack">
+        <xs:annotation>
+          <xs:documentation>Restricted. Install a .Pack.Gbx file under Packs/, for example a title pack.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;install_pack>&#10;&#32;&#32;&lt;name>Example Title&lt;/name>&#10;&#32;&#32;&lt;file>Packs/Example.Title.Pack.Gbx&lt;/file>&#10;&#32;&#32;&lt;url>https://example.com/Example.Title.Pack.Gbx&lt;/url>&#10;&lt;/install_pack></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="install_item" type="InstallItem">
+        <xs:annotation>
+          <xs:documentation>Restricted. Install an .Item.Gbx file under Items/.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;install_item>&#10;&#32;&#32;&lt;name>Example Item&lt;/name>&#10;&#32;&#32;&lt;file>Items/Example.Item.Gbx&lt;/file>&#10;&#32;&#32;&lt;url>https://example.com/Example.Item.Gbx&lt;/url>&#10;&lt;/install_item></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="install_block" type="InstallBlock">
+        <xs:annotation>
+          <xs:documentation>Restricted. Install a .Block.Gbx file under Blocks/.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;install_block>&#10;&#32;&#32;&lt;name>Example Block&lt;/name>&#10;&#32;&#32;&lt;file>Blocks/Example.Block.Gbx&lt;/file>&#10;&#32;&#32;&lt;url>https://example.com/Example.Block.Gbx&lt;/url>&#10;&lt;/install_block></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="install_macroblock" type="InstallMacroblock">
+        <xs:annotation>
+          <xs:documentation>Restricted. Install a .Macroblock.Gbx file under Blocks/.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;install_macroblock>&#10;&#32;&#32;&lt;name>Example Macroblock&lt;/name>&#10;&#32;&#32;&lt;file>Blocks/Example.Macroblock.Gbx&lt;/file>&#10;&#32;&#32;&lt;url>https://example.com/Example.Macroblock.Gbx&lt;/url>&#10;&lt;/install_macroblock></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="install_script" type="InstallScript">
+        <xs:annotation>
+          <xs:documentation>Restricted. Install a .Script.txt file under Scripts/.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;install_script>&#10;&#32;&#32;&lt;name>Example Script&lt;/name>&#10;&#32;&#32;&lt;file>Scripts/Example.Script.txt&lt;/file>&#10;&#32;&#32;&lt;url>https://example.com/Example.Script.txt&lt;/url>&#10;&lt;/install_script></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:choice>
+  </xs:group>
+
+  <xs:complexType name="ShowMessage">
+    <xs:all>
+      <xs:element name="message" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Text of the message. Formatting codes are allowed.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;message>Welcome to $o$09fExample$z!&lt;/message></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="GoTo">
+    <xs:all>
+      <xs:element name="link" type="NonBlank">
+        <xs:annotation>
+          <xs:documentation>The link to open.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;link>https://example.com/page.xml&lt;/link></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="LoginAction">
+    <xs:all>
+      <xs:element name="login" type="Login"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="InviteBuddy">
+    <xs:all>
+      <xs:element name="email" type="Email"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="JoinServer">
+    <!--
+      Any order of: one of login or ip, optional password, optional connection_type.
+      xs:all cannot hold a choice, so the orders are spelled out.
+    -->
+    <xs:choice>
+      <xs:sequence>
+        <xs:group ref="ServerAddress"/>
+        <xs:choice minOccurs="0">
+          <xs:sequence>
+            <xs:element name="password" type="xs:string">
+              <xs:annotation>
+                <xs:documentation><![CDATA[Example:<pre>&lt;password>example-password&lt;/password></pre>]]></xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="connection_type" type="ConnectionType" minOccurs="0"/>
+          </xs:sequence>
+          <xs:sequence>
+            <xs:element name="connection_type" type="ConnectionType"/>
+            <xs:element name="password" type="xs:string" minOccurs="0">
+              <xs:annotation>
+                <xs:documentation><![CDATA[Example:<pre>&lt;password>example-password&lt;/password></pre>]]></xs:documentation>
+              </xs:annotation>
+            </xs:element>
+          </xs:sequence>
+        </xs:choice>
+      </xs:sequence>
+      <xs:sequence>
+        <xs:element name="password" type="xs:string">
+          <xs:annotation>
+            <xs:documentation><![CDATA[Example:<pre>&lt;password>example-password&lt;/password></pre>]]></xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:choice>
+          <xs:sequence>
+            <xs:group ref="ServerAddress"/>
+            <xs:element name="connection_type" type="ConnectionType" minOccurs="0"/>
+          </xs:sequence>
+          <xs:sequence>
+            <xs:element name="connection_type" type="ConnectionType"/>
+            <xs:group ref="ServerAddress"/>
+          </xs:sequence>
+        </xs:choice>
+      </xs:sequence>
+      <xs:sequence>
+        <xs:element name="connection_type" type="ConnectionType"/>
+        <xs:choice>
+          <xs:sequence>
+            <xs:group ref="ServerAddress"/>
+            <xs:element name="password" type="xs:string" minOccurs="0">
+              <xs:annotation>
+                <xs:documentation><![CDATA[Example:<pre>&lt;password>example-password&lt;/password></pre>]]></xs:documentation>
+              </xs:annotation>
+            </xs:element>
+          </xs:sequence>
+          <xs:sequence>
+            <xs:element name="password" type="xs:string">
+              <xs:annotation>
+                <xs:documentation><![CDATA[Example:<pre>&lt;password>example-password&lt;/password></pre>]]></xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:group ref="ServerAddress"/>
+          </xs:sequence>
+        </xs:choice>
+      </xs:sequence>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:group name="ServerAddress">
+    <xs:choice>
+      <xs:element name="login" type="Login">
+        <xs:annotation>
+          <xs:documentation>Server login. Do not combine it with ip, which would be ignored.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;login>example_login&lt;/login></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="ip" type="IpAddress">
+        <xs:annotation>
+          <xs:documentation>IPv4 address with an optional :port. Host names are not accepted.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;ip>203.0.113.10:2350&lt;/ip></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:choice>
+  </xs:group>
+
+  <xs:complexType name="PlayMap">
+    <!--
+      Requires one name and at least one of url or uid, in any order.
+      XSD 1.0 cannot also limit url, uid and lightmap_url to one each without listing every order.
+    -->
+    <xs:sequence>
+      <xs:element name="lightmap_url" type="DataUrl" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:choice>
+        <xs:sequence>
+          <xs:element name="name" type="xs:string">
+            <xs:annotation>
+              <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Map&lt;/name></pre>]]></xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="lightmap_url" type="DataUrl" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:group ref="MapReference"/>
+          <xs:group ref="PlayMapRest" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:sequence>
+          <xs:group ref="MapReference"/>
+          <xs:group ref="PlayMapRest" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element name="name" type="xs:string">
+            <xs:annotation>
+              <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Map&lt;/name></pre>]]></xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:group ref="PlayMapRest" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+      </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:group name="MapReference">
+    <xs:choice>
+      <xs:element name="url" type="DataUrl">
+        <xs:annotation>
+          <xs:documentation>Download URL. Any path works, because the game sets the .Map.Gbx extension itself.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;url>https://example.com/maps/Example.Map.Gbx&lt;/url></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="uid" type="MapUid">
+        <xs:annotation>
+          <xs:documentation>Map UID. A local copy with this UID is used instead of downloading.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;uid>ExampleMapUid00000000000000&lt;/uid></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:choice>
+  </xs:group>
+
+  <xs:group name="PlayMapRest">
+    <xs:choice>
+      <xs:group ref="MapReference"/>
+      <xs:element name="lightmap_url" type="DataUrl"/>
+    </xs:choice>
+  </xs:group>
+
+  <xs:complexType name="InstallMap">
+    <xs:all>
+      <xs:element name="name" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Name shown to the player.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Map&lt;/name></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="url" type="DataUrl">
+        <xs:annotation>
+          <xs:documentation>Download URL. Any path works. The extension becomes .Map.Gbx unless it already is .Challenge.Gbx.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;url>https://example.com/maps/Example.Map.Gbx&lt;/url></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="lightmap_url" type="DataUrl" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>URL of the map's lightmap cache.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;lightmap_url>https://example.com/maps/Example.LightMap.zip&lt;/lightmap_url></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="location" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Destination folder. Ignored except in the ManiaCode the game fetches by itself on connecting to the master server.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;location>Maps/Downloaded/&lt;/location></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="InstallMapPack">
+    <!-- One name and at least one map, in any order. -->
+    <xs:choice>
+      <xs:sequence>
+        <xs:element name="name" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>Name of the folder created in Maps/Downloaded.</xs:documentation>
+            <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Cup&lt;/name></pre>]]></xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="map" type="MapInPack" maxOccurs="unbounded">
+          <xs:annotation>
+            <xs:documentation><![CDATA[Example:<pre>&lt;map>&#10;&#32;&#32;&lt;name>Round 1&lt;/name>&#10;&#32;&#32;&lt;url>https://example.com/maps/Round1.Map.Gbx&lt;/url>&#10;&lt;/map></pre>]]></xs:documentation>
+          </xs:annotation>
+        </xs:element>
+      </xs:sequence>
+      <xs:sequence>
+        <xs:element name="map" type="MapInPack" maxOccurs="unbounded">
+          <xs:annotation>
+            <xs:documentation><![CDATA[Example:<pre>&lt;map>&#10;&#32;&#32;&lt;name>Round 1&lt;/name>&#10;&#32;&#32;&lt;url>https://example.com/maps/Round1.Map.Gbx&lt;/url>&#10;&lt;/map></pre>]]></xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="name" type="xs:string">
+          <xs:annotation>
+            <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Cup&lt;/name></pre>]]></xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="map" type="MapInPack" minOccurs="0" maxOccurs="unbounded">
+          <xs:annotation>
+            <xs:documentation><![CDATA[Example:<pre>&lt;map>&#10;&#32;&#32;&lt;name>Round 1&lt;/name>&#10;&#32;&#32;&lt;url>https://example.com/maps/Round1.Map.Gbx&lt;/url>&#10;&lt;/map></pre>]]></xs:documentation>
+          </xs:annotation>
+        </xs:element>
+      </xs:sequence>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="MapInPack">
+    <xs:all>
+      <xs:element name="name" type="xs:string">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Map&lt;/name></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="url" type="DataUrl"/>
+      <xs:element name="lightmap_url" type="DataUrl" minOccurs="0"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="Replay">
+    <xs:all>
+      <xs:element name="name" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Name shown to the player. Also the file name, to which .Replay.Gbx is appended.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Replay&lt;/name></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="url" type="DataUrl">
+        <xs:annotation>
+          <xs:documentation>Download URL. Any path works, because the game sets the extension itself.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;url>https://example.com/replays/Example.Replay.Gbx&lt;/url></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <!--
+    The remaining actions take name, file and url. They differ in what file may be.
+    Their url must itself end in an allowed extension, so ".../download?id=5" is rejected.
+  -->
+
+  <xs:complexType name="GetSkin">
+    <xs:all>
+      <xs:element name="name" type="xs:string">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Skin&lt;/name></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="file" type="FileName"/>
+      <xs:element name="url" type="FileUrl"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="InstallSkin">
+    <xs:all>
+      <xs:element name="name" type="xs:string">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Skin&lt;/name></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="file" type="SkinFile"/>
+      <xs:element name="url" type="FileUrl"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="InstallPack">
+    <xs:all>
+      <xs:element name="name" type="xs:string">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Title&lt;/name></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="file" type="PackFile"/>
+      <xs:element name="url" type="FileUrl"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="InstallItem">
+    <xs:all>
+      <xs:element name="name" type="xs:string">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Item&lt;/name></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="file" type="ItemFile"/>
+      <xs:element name="url" type="FileUrl"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="InstallBlock">
+    <xs:all>
+      <xs:element name="name" type="xs:string">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Block&lt;/name></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="file" type="BlockFile"/>
+      <xs:element name="url" type="FileUrl"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="InstallMacroblock">
+    <xs:all>
+      <xs:element name="name" type="xs:string">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Macroblock&lt;/name></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="file" type="MacroblockFile"/>
+      <xs:element name="url" type="FileUrl"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="InstallScript">
+    <xs:all>
+      <xs:element name="name" type="xs:string">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Script&lt;/name></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="file" type="ScriptFile"/>
+      <xs:element name="url" type="FileUrl"/>
+    </xs:all>
+  </xs:complexType>
+
+  <!-- ============================================================ Value types -->
+
+  <xs:simpleType name="IntFlag">
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="xs:int">
+          <xs:enumeration value="0"/>
+          <xs:enumeration value="1"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:int"/>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+
+  <xs:simpleType name="Timeout">
+    <xs:restriction base="xs:unsignedInt"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="ConnectionType">
+    <xs:annotation>
+      <xs:documentation>1 = play (default), 2 = spectate, 3 = join as referee.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>2</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="1"/>
+      <xs:enumeration value="2"/>
+      <xs:enumeration value="3"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="NonBlank">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[\s\S]*\S[\s\S]*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="Login">
+    <xs:annotation>
+      <xs:documentation>Surrounding whitespace is trimmed. The game may lowercase and truncate it.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>example_login</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="NonBlank"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="MapUid">
+    <xs:annotation>
+      <xs:documentation>Used exactly as written, so it cannot contain whitespace.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\S+"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="IpAddress">
+    <xs:annotation>
+      <xs:documentation>a.b.c.d or a.b.c.d:port.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\s*((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(:(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[0-9]{1,4}))?\s*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="Email">
+    <xs:annotation>
+      <xs:documentation>No surrounding whitespace. The top-level domain must have 2 letters or be one of: aero, asia, biz, cat, com, coop, edu, gov, info, int, jobs, mil, mobi, museum, name, net, org, post, pro, tel, travel. Newer domains such as .dev or .app are rejected by the game.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>friend@example.com</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Za-z0-9%+_\-]+(\.[A-Za-z0-9%+_\-]+)*@([A-Za-z0-9\-]+\.)+([A-Za-z]{2}|[Aa][Ee][Rr][Oo]|[Aa][Ss][Ii][Aa]|[Bb][Ii][Zz]|[Cc][Aa][Tt]|[Cc][Oo][Mm]|[Cc][Oo][Oo][Pp]|[Ee][Dd][Uu]|[Gg][Oo][Vv]|[Ii][Nn][Ff][Oo]|[Ii][Nn][Tt]|[Jj][Oo][Bb][Ss]|[Mm][Ii][Ll]|[Mm][Oo][Bb][Ii]|[Mm][Uu][Ss][Ee][Uu][Mm]|[Nn][Aa][Mm][Ee]|[Nn][Ee][Tt]|[Oo][Rr][Gg]|[Pp][Oo][Ss][Tt]|[Pp][Rr][Oo]|[Tt][Ee][Ll]|[Tt][Rr][Aa][Vv][Ee][Ll])"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="DataUrl">
+    <xs:annotation>
+      <xs:documentation>scheme://host/path or a file:// URL. A host without a following '/' or '?' is rejected by the game. Surrounding whitespace is trimmed.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>https://example.com/files/Example.Gbx</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\s*([^\s:]+://[^/?\\\s]+[/?\\].*|[Ff][Ii][Ll][Ee]://.+)\s*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="FileUrl">
+    <xs:annotation>
+      <xs:documentation>A DataUrl that ends in an allowed extension: jpg, jpeg, png, tga, dds, webp, avi, webm, wav, ogg, mux, txt, zip or gbx.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>https://example.com/skins/Example.zip</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="DataUrl">
+      <xs:pattern value="[\s\S]+\.([Jj][Pp][Ee]?[Gg]|[Pp][Nn][Gg]|[Tt][Gg][Aa]|[Dd][Dd][Ss]|[Ww][Ee][Bb][Pp]|[Aa][Vv][Ii]|[Ww][Ee][Bb][Mm]|[Ww][Aa][Vv]|[Oo][Gg][Gg]|[Mm][Uu][Xx]|[Tt][Xx][Tt]|[Zz][Ii][Pp]|[Gg][Bb][Xx])\s*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="FileName">
+    <xs:annotation>
+      <xs:documentation>Path relative to the user folder, with / or \, ending in an allowed extension: jpg, jpeg, png, tga, dds, webp, avi, webm, wav, ogg, mux, txt, zip or gbx. Spaces are significant, line breaks and tabs are removed.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>Skins/Models/CanyonCar/Example.zip</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[\s\S]+\.([Jj][Pp][Ee]?[Gg]|[Pp][Nn][Gg]|[Tt][Gg][Aa]|[Dd][Dd][Ss]|[Ww][Ee][Bb][Pp]|[Aa][Vv][Ii]|[Ww][Ee][Bb][Mm]|[Ww][Aa][Vv]|[Oo][Gg][Gg]|[Mm][Uu][Xx]|[Tt][Xx][Tt]|[Zz][Ii][Pp]|[Gg][Bb][Xx])[\t\n\r]*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- Patterns of a derived type apply in addition to those of FileName. -->
+
+  <xs:simpleType name="SkinFile">
+    <xs:annotation>
+      <xs:documentation>Skins/... with any allowed extension. Skins/Vehicles/ is redirected to Skins/Models/.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>Skins/Models/CanyonCar/Example.zip</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="FileName">
+      <xs:pattern value="[\t\n\r]*(\.[/\\])?[Ss][Kk][Ii][Nn][Ss][/\\][\s\S]+"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PackFile">
+    <xs:annotation>
+      <xs:documentation>Packs/... ending in .Pack.Gbx (any case). The parser also tests for .pak, but the built-in extension list rejects that first.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>Packs/Example.Title.Pack.Gbx</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="FileName">
+      <xs:pattern value="[\t\n\r]*(\.[/\\])?[Pp][Aa][Cc][Kk][Ss][/\\][\s\S]*\.[Pp][Aa][Cc][Kk]\.[Gg][Bb][Xx][\t\n\r]*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ItemFile">
+    <xs:annotation>
+      <xs:documentation>Items/... ending in .Item.Gbx (any case).</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>Items/Example.Item.Gbx</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="FileName">
+      <xs:pattern value="[\t\n\r]*(\.[/\\])?[Ii][Tt][Ee][Mm][Ss][/\\][\s\S]*\.[Ii][Tt][Ee][Mm]\.[Gg][Bb][Xx][\t\n\r]*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="BlockFile">
+    <xs:annotation>
+      <xs:documentation>Blocks/... ending in .Block.Gbx (any case).</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>Blocks/Example.Block.Gbx</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="FileName">
+      <xs:pattern value="[\t\n\r]*(\.[/\\])?[Bb][Ll][Oo][Cc][Kk][Ss][/\\][\s\S]*\.[Bb][Ll][Oo][Cc][Kk]\.[Gg][Bb][Xx][\t\n\r]*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="MacroblockFile">
+    <xs:annotation>
+      <xs:documentation>Blocks/... ending in .Macroblock.Gbx (any case).</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>Blocks/Example.Macroblock.Gbx</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="FileName">
+      <xs:pattern value="[\t\n\r]*(\.[/\\])?[Bb][Ll][Oo][Cc][Kk][Ss][/\\][\s\S]*\.[Mm][Aa][Cc][Rr][Oo][Bb][Ll][Oo][Cc][Kk]\.[Gg][Bb][Xx][\t\n\r]*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ScriptFile">
+    <xs:annotation>
+      <xs:documentation>Scripts/... ending in .Script.txt (any case).</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>Scripts/Example.Script.txt</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="FileName">
+      <xs:pattern value="[\t\n\r]*(\.[/\\])?[Ss][Cc][Rr][Ii][Pp][Tt][Ss][/\\][\s\S]*\.[Ss][Cc][Rr][Ii][Pp][Tt]\.[Tt][Xx][Tt][\t\n\r]*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

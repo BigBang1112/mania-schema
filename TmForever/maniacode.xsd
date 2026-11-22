@@ -1,0 +1,558 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  TmForever ManiaCode XML schema (XSD 1.0, no target namespace)
+
+  Derived by static analysis of TmForever.exe (TrackMania Nations/United Forever)
+    version       2.11.26 (string in the binary, no version resource), x86
+    file date     2011-01-28
+    SHA-256       3847CF9F20BFC63914450060ED528C12104F743D96AD23D6E76ABD178DE8C84F
+
+  Use:
+    <maniacode xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:noNamespaceSchemaLocation="maniacode.xsd">
+
+  How the engine handles a document:
+    * All actions are parsed before any runs. One invalid action cancels the whole ManiaCode,
+      and so does a document without any action.
+    * Every child of maniacode must be an action. Unlike ManiaPlanet, timeout is not allowed:
+      it cancels the whole ManiaCode.
+    * Actions run in document order. When one fails and others remain, the player is asked
+      whether to continue.
+    * Inside an action, children may be in any order. If repeated, the first one is used.
+    * Unknown children of an action, stray text and unknown attributes are silently ignored.
+      This schema reports them.
+    * Action names are case-insensitive, child names and the root are case-sensitive.
+      XSD cannot express the former, so this schema accepts lowercase action names only.
+    * Text is not trimmed. A space or line break before a URL makes it invalid.
+      Text that is only whitespace counts as empty.
+
+  Restrictions on install_track, install_track_pack, install_replay and install_skin
+  (checked at run time, not expressible in XSD):
+    * The ManiaCode must come from an address resolved by the master server (a short code).
+      Otherwise the whole ManiaCode is refused with "Access denied", other actions included.
+    * The player's account needs the "Maniacodes" feature. Without it the action fails.
+
+  File extensions:
+    The FileName types hold the list built into the executable. The master server can replace
+    that list at run time.
+
+  Limits of XSD 1.0:
+    * In play_track, repeated optional children are not reported.
+    * install_skin paths that reach a forbidden folder through "." or ".." are not reported.
+    * .NET's validator ignores one final line break when it checks email and need_password,
+      so it misses that error there. Xerces reports it.
+
+  Sources in the binary (image base 00400000):
+    Dispatch             00688e20  CGameCtnNetwork::ParseManiaCodeScriptXML
+    show_message         00686400  ParseShowMessageAction
+    goto                 0067ef40  ParseGoToAction
+    install_track        00688580  ParseInstallTrackAction
+    install_track_pack   00686460  ParseInstallTrackPackAction
+    replay actions       0067efa0  ParseStandardDataAction
+    install_skin         0067fb70  ParseInstallSkinAction
+    get_skin             0067fe50  ParseGetSkinAction
+    play_track           00686650  ParsePlayTrackAction
+    join_server          00680080  ParseJoinServerAction
+    add_buddy            00680250  ParseAddBuddyAction
+    invite_buddy         006802b0  ParseInviteBuddyAction
+    add_favourite        006803e0  ParseAddFavouriteAction
+    lightmap_url         0067f5a0  ParseLightMapForAction
+    official_server      0067f7b0  ParseOfficialServerForAction
+    Access check         00689620  OnManiaCodeFileReceived
+    Execution            006045f0  CGameCtnApp::ProcessManiaCodeActionsList
+    Track install        005f8ef0  CGameCtnApp::InstallDownloadedTrack
+    location switch      0068d89a  GetInfosOnConnectToInternet
+    Values               00516e70 (URL), 0067ed20 (extension), 00508740 (IP),
+                         0050af90 (e-mail), 0091f8f0 (boolean), 0042ec70 (file names)
+    Extension list       0068bb80 (built in), 00687370 (master server override)
+    User folders         005eb437  (folder table)
+
+  Examples in xs:documentation:
+    They are HTML for the tooltips of XML language servers, which collapse whitespace.
+    Keep each on one line, with &#10; for a line break, &#32; for indentation and &lt; for "<".
+    An annotation on a declaration hides the one on its type. If a declaration has no text of
+    its own, put the example on the type instead.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+  <!-- ============================================================ Document element -->
+
+  <xs:element name="maniacode" type="ManiaCode">
+    <xs:annotation>
+      <xs:documentation>A list of actions for the game to execute.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;maniacode>&#10;&#32;&#32;&lt;show_message>&#10;&#32;&#32;&#32;&#32;&lt;message>Welcome!&lt;/message>&#10;&#32;&#32;&lt;/show_message>&#10;&lt;/maniacode></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:complexType name="ManiaCode">
+    <xs:group ref="Action" maxOccurs="unbounded"/>
+    <xs:attribute name="noconfirmation" type="IntFlag">
+      <xs:annotation>
+        <xs:documentation>Non-zero hides the final "ManiaCode complete" message. It skips no other confirmation. It must be an integer: "true" reads as 0.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>noconfirmation="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <!-- ============================================================ Actions -->
+
+  <xs:group name="Action">
+    <xs:choice>
+      <xs:element name="show_message" type="ShowMessage">
+        <xs:annotation>
+          <xs:documentation>Show a message to the player.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;show_message>&#10;&#32;&#32;&lt;message>Welcome to $o$09fExample$z!&lt;/message>&#10;&lt;/show_message></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="goto" type="GoTo">
+        <xs:annotation>
+          <xs:documentation>Open a Manialink.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;goto>&#10;&#32;&#32;&lt;link>http://example.com/page.xml&lt;/link>&#10;&lt;/goto></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="play_track" type="PlayTrack">
+        <xs:annotation>
+          <xs:documentation>Play a track, found locally by uid or downloaded from url. Needs name and at least one of those two.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;play_track>&#10;&#32;&#32;&lt;name>Example Track&lt;/name>&#10;&#32;&#32;&lt;url>http://example.com/tracks/Example.Challenge.Gbx&lt;/url>&#10;&lt;/play_track></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="play_replay" type="Replay">
+        <xs:annotation>
+          <xs:documentation>Download a replay and play against it.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;play_replay>&#10;&#32;&#32;&lt;name>Example Replay&lt;/name>&#10;&#32;&#32;&lt;url>http://example.com/replays/Example.Replay.Gbx&lt;/url>&#10;&lt;/play_replay></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="view_replay" type="Replay">
+        <xs:annotation>
+          <xs:documentation>Download a replay and watch it.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;view_replay>&#10;&#32;&#32;&lt;name>Example Replay&lt;/name>&#10;&#32;&#32;&lt;url>http://example.com/replays/Example.Replay.Gbx&lt;/url>&#10;&lt;/view_replay></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="get_skin" type="GetSkin">
+        <xs:annotation>
+          <xs:documentation>Download a skin as a cached pack. Unlike install_skin, it has no install restrictions.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;get_skin>&#10;&#32;&#32;&lt;name>Example Skin&lt;/name>&#10;&#32;&#32;&lt;file>Skins/Vehicles/CarCommon/Example.zip&lt;/file>&#10;&#32;&#32;&lt;url>http://example.com/skins/Example.zip&lt;/url>&#10;&lt;/get_skin></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="join_server" type="JoinServer">
+        <xs:annotation>
+          <xs:documentation>Join a server by login or IP address. There is no password or spectator option.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;join_server>&#10;&#32;&#32;&lt;login>example_server&lt;/login>&#10;&lt;/join_server></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="add_buddy" type="LoginAction">
+        <xs:annotation>
+          <xs:documentation>Add a player as a buddy.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;add_buddy>&#10;&#32;&#32;&lt;login>example_player&lt;/login>&#10;&lt;/add_buddy></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="invite_buddy" type="InviteBuddy">
+        <xs:annotation>
+          <xs:documentation>Invite someone by e-mail.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;invite_buddy>&#10;&#32;&#32;&lt;email>friend@example.com&lt;/email>&#10;&lt;/invite_buddy></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="add_favourite" type="LoginAction">
+        <xs:annotation>
+          <xs:documentation>Add a server to the favourites, by login. The spelling add_favorite does not exist in TmForever.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;add_favourite>&#10;&#32;&#32;&lt;login>example_server&lt;/login>&#10;&lt;/add_favourite></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="install_track" type="InstallTrack">
+        <xs:annotation>
+          <xs:documentation>Restricted. Download and install a track.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;install_track>&#10;&#32;&#32;&lt;name>Example Track&lt;/name>&#10;&#32;&#32;&lt;url>http://example.com/tracks/Example.Challenge.Gbx&lt;/url>&#10;&lt;/install_track></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="install_track_pack" type="InstallTrackPack">
+        <xs:annotation>
+          <xs:documentation>Restricted. Install several tracks into Tracks/Challenges/Downloaded/Manialinks/(name).</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;install_track_pack>&#10;&#32;&#32;&lt;name>Example Cup&lt;/name>&#10;&#32;&#32;&lt;track>&#10;&#32;&#32;&#32;&#32;&lt;name>Round 1&lt;/name>&#10;&#32;&#32;&#32;&#32;&lt;url>http://example.com/tracks/Round1.Challenge.Gbx&lt;/url>&#10;&#32;&#32;&lt;/track>&#10;&lt;/install_track_pack></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="install_replay" type="Replay">
+        <xs:annotation>
+          <xs:documentation>Restricted. Download and install a replay.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;install_replay>&#10;&#32;&#32;&lt;name>Example Replay&lt;/name>&#10;&#32;&#32;&lt;url>http://example.com/replays/Example.Replay.Gbx&lt;/url>&#10;&lt;/install_replay></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="install_skin" type="InstallSkin">
+        <xs:annotation>
+          <xs:documentation>Restricted. Install a file anywhere in the user directory except under Config, Profiles and Scores.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;install_skin>&#10;&#32;&#32;&lt;name>Example Skin&lt;/name>&#10;&#32;&#32;&lt;file>Skins/Vehicles/CarCommon/Example.zip&lt;/file>&#10;&#32;&#32;&lt;url>http://example.com/skins/Example.zip&lt;/url>&#10;&lt;/install_skin></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:choice>
+  </xs:group>
+
+  <xs:complexType name="ShowMessage">
+    <xs:all>
+      <xs:element name="message" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Text of the message.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;message>Welcome to $o$09fExample$z!&lt;/message></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="GoTo">
+    <xs:all>
+      <xs:element name="link" type="NonBlank">
+        <xs:annotation>
+          <xs:documentation>The Manialink to open. The parser accepts an empty link, but then there is nothing to open.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;link>http://example.com/page.xml&lt;/link></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="LoginAction">
+    <xs:all>
+      <xs:element name="login" type="NonBlank">
+        <xs:annotation>
+          <xs:documentation>The login. The parser accepts an empty one, but then there is nobody to add.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;login>example_login&lt;/login></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="InviteBuddy">
+    <xs:all>
+      <xs:element name="email" type="Email"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="JoinServer">
+    <xs:choice>
+      <xs:element name="login" type="NonBlank">
+        <xs:annotation>
+          <xs:documentation>Login of the server. When present and not empty, ip is ignored.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;login>example_login&lt;/login></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="ip" type="IpAddress">
+        <xs:annotation>
+          <xs:documentation>Address of the server, with an optional port.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;ip>203.0.113.10:2350&lt;/ip></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:group name="PlayTrackOption">
+    <xs:choice>
+      <xs:element name="lightmap_url" type="HttpUrl">
+        <xs:annotation>
+          <xs:documentation>URL of the track's lightmap (.LightMap.zip).</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;lightmap_url>http://example.com/tracks/Example.LightMap.zip&lt;/lightmap_url></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="official_server" type="OfficialServer">
+        <xs:annotation>
+          <xs:documentation>Custom official mode for this track, with its own web services.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;official_server>&#10;&#32;&#32;&lt;name>Example League&lt;/name>&#10;&#32;&#32;&lt;request_url>http://example.com/request&lt;/request_url>&#10;&#32;&#32;&lt;upload_url>http://example.com/upload&lt;/upload_url>&#10;&#32;&#32;&lt;ladder_url>http://example.com/ladder&lt;/ladder_url>&#10;&#32;&#32;&lt;start_url>http://example.com/start&lt;/start_url>&#10;&#32;&#32;&lt;stop_url>http://example.com/stop&lt;/stop_url>&#10;&lt;/official_server></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:choice>
+  </xs:group>
+
+  <xs:group name="TrackSource">
+    <xs:choice>
+      <xs:element name="url" type="HttpUrl">
+        <xs:annotation>
+          <xs:documentation>Where to download the track. Not used when uid is found locally.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;url>http://example.com/tracks/Example.Challenge.Gbx&lt;/url></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="uid" type="NonBlank">
+        <xs:annotation>
+          <xs:documentation>Unique id of the track. An empty uid cancels the ManiaCode, even with a url.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;uid>ExampleTrackUid000000000000&lt;/uid></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:choice>
+  </xs:group>
+
+  <xs:complexType name="PlayTrack">
+    <!-- name exactly once and at least one of url and uid, in any order. -->
+    <xs:sequence>
+      <xs:group ref="PlayTrackOption" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:choice>
+        <xs:sequence>
+          <xs:element name="name" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>Name shown while downloading.</xs:documentation>
+              <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Track&lt;/name></pre>]]></xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:group ref="PlayTrackOption" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:group ref="TrackSource"/>
+          <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:group ref="TrackSource"/>
+            <xs:group ref="PlayTrackOption"/>
+          </xs:choice>
+        </xs:sequence>
+        <xs:sequence>
+          <xs:group ref="TrackSource"/>
+          <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:group ref="TrackSource"/>
+            <xs:group ref="PlayTrackOption"/>
+          </xs:choice>
+          <xs:element name="name" type="xs:string">
+            <xs:annotation>
+              <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Track&lt;/name></pre>]]></xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:group ref="TrackSource"/>
+            <xs:group ref="PlayTrackOption"/>
+          </xs:choice>
+        </xs:sequence>
+      </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="OfficialServer">
+    <xs:all>
+      <xs:element name="name" type="NonBlank">
+        <xs:annotation>
+          <xs:documentation>Name of the official server. Must not be empty.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;name>Example League&lt;/name></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="request_url" type="HttpUrl"/>
+      <xs:element name="upload_url" type="HttpUrl"/>
+      <xs:element name="ladder_url" type="HttpUrl"/>
+      <xs:element name="start_url" type="HttpUrl"/>
+      <xs:element name="stop_url" type="HttpUrl"/>
+      <xs:element name="need_password" type="Bool" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Default false.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;need_password>1&lt;/need_password></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="ad_suffix" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;ad_suffix>example&lt;/ad_suffix></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="InstallTrack">
+    <xs:all>
+      <xs:element name="name" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Name shown while downloading.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Track&lt;/name></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="url" type="HttpUrl">
+        <xs:annotation>
+          <xs:documentation>Where to download it. ".Challenge.Gbx" is assumed when missing.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;url>http://example.com/tracks/Example.Challenge.Gbx&lt;/url></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="lightmap_url" type="HttpUrl" minOccurs="0"/>
+      <xs:element name="location" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Target folder in the user directory. It is read only in the ManiaCode that the master server makes the game fetch when connecting. In any other ManiaCode it is ignored.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;location>Tracks/Challenges/Downloaded/&lt;/location></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="InstallTrackPack">
+    <!-- name exactly once and at least one track, in any order. -->
+    <xs:choice>
+      <xs:sequence>
+        <xs:element name="name" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>Name of the pack, also used as folder name.</xs:documentation>
+            <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Cup&lt;/name></pre>]]></xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="track" type="TrackInPack" maxOccurs="unbounded">
+          <xs:annotation>
+            <xs:documentation><![CDATA[Example:<pre>&lt;track>&#10;&#32;&#32;&lt;name>Round 1&lt;/name>&#10;&#32;&#32;&lt;url>http://example.com/tracks/Round1.Challenge.Gbx&lt;/url>&#10;&lt;/track></pre>]]></xs:documentation>
+          </xs:annotation>
+        </xs:element>
+      </xs:sequence>
+      <xs:sequence>
+        <xs:element name="track" type="TrackInPack" maxOccurs="unbounded">
+          <xs:annotation>
+            <xs:documentation><![CDATA[Example:<pre>&lt;track>&#10;&#32;&#32;&lt;name>Round 1&lt;/name>&#10;&#32;&#32;&lt;url>http://example.com/tracks/Round1.Challenge.Gbx&lt;/url>&#10;&lt;/track></pre>]]></xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="name" type="xs:string">
+          <xs:annotation>
+            <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Cup&lt;/name></pre>]]></xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="track" type="TrackInPack" minOccurs="0" maxOccurs="unbounded">
+          <xs:annotation>
+            <xs:documentation><![CDATA[Example:<pre>&lt;track>&#10;&#32;&#32;&lt;name>Round 1&lt;/name>&#10;&#32;&#32;&lt;url>http://example.com/tracks/Round1.Challenge.Gbx&lt;/url>&#10;&lt;/track></pre>]]></xs:documentation>
+          </xs:annotation>
+        </xs:element>
+      </xs:sequence>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="TrackInPack">
+    <xs:all>
+      <xs:element name="name" type="xs:string">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Track&lt;/name></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="url" type="HttpUrl"/>
+      <xs:element name="lightmap_url" type="HttpUrl" minOccurs="0"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="Replay">
+    <xs:all>
+      <xs:element name="name" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Name shown while downloading.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Replay&lt;/name></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="url" type="HttpUrl">
+        <xs:annotation>
+          <xs:documentation>Where to download it. ".Replay.Gbx" is assumed when missing.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;url>http://example.com/replays/Example.Replay.Gbx&lt;/url></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="GetSkin">
+    <xs:all>
+      <xs:element name="name" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Name shown while downloading.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Skin&lt;/name></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="file" type="FileName">
+        <xs:annotation>
+          <xs:documentation>Name of the cached pack, with an allowed extension.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;file>Skins/Vehicles/CarCommon/Example.zip&lt;/file></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="url" type="HttpUrl"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="InstallSkin">
+    <xs:all>
+      <xs:element name="name" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Name shown while downloading.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;name>Example Skin&lt;/name></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="file" type="InstallFileName">
+        <xs:annotation>
+          <xs:documentation>Path relative to the user directory, for example Skins/Vehicles/CarCommon/My.zip. It does not have to be under Skins, but may not be under Config, Profiles or Scores.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;file>Skins/Vehicles/CarCommon/Example.zip&lt;/file></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="url" type="HttpUrl"/>
+    </xs:all>
+  </xs:complexType>
+
+  <!-- ============================================================ Values -->
+
+  <xs:simpleType name="NonBlank">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[\s\S]*\S[\s\S]*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="IntFlag">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\s*[+\-]?[0-9]+\s*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="Bool">
+    <xs:annotation>
+      <xs:documentation>1, true, yes, t or y are true, without surrounding whitespace. The engine reads everything else as false. This schema accepts 0, false, no, f, n and an empty value for that.</xs:documentation>
+    </xs:annotation>
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="1"/>
+          <xs:enumeration value="0"/>
+          <xs:enumeration value="true"/>
+          <xs:enumeration value="false"/>
+          <xs:enumeration value="yes"/>
+          <xs:enumeration value="no"/>
+          <xs:enumeration value="t"/>
+          <xs:enumeration value="f"/>
+          <xs:enumeration value="y"/>
+          <xs:enumeration value="n"/>
+          <xs:enumeration value=""/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:pattern value="1|0|[Tt][Rr][Uu][Ee]|[Ff][Aa][Ll][Ss][Ee]|[Yy][Ee][Ss]|[Nn][Oo]|[Tt]|[Ff]|[Yy]|[Nn]"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+
+  <xs:simpleType name="HttpUrl">
+    <xs:annotation>
+      <xs:documentation>Starts with http:// or https:// (any case, nothing before it), then a host and a slash. "http://host" without the slash is invalid.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>http://example.com/files/Example.zip</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[Hh][Tt][Tt][Pp][Ss]?://([^/@]*@[^/:][^/]*|[^/:@][^/@]*)/[\s\S]*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="FileName">
+    <xs:annotation>
+      <xs:documentation>Ends in .jpg, .jpeg, .tga, .dds, .avi, .bik, .wav, .ogg, .mux, .txt, .zip or .gbx (any case). Unlike ManiaPlanet, .png is not allowed. A trailing space is invalid. Line breaks and tabs are removed by the engine, so this schema accepts them only at either end.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[\t\n\r]*[^\t\n\r]*\.([Jj][Pp][Gg]|[Jj][Pp][Ee][Gg]|[Tt][Gg][Aa]|[Dd][Dd][Ss]|[Aa][Vv][Ii]|[Bb][Ii][Kk]|[Ww][Aa][Vv]|[Oo][Gg][Gg]|[Mm][Uu][Xx]|[Tt][Xx][Tt]|[Zz][Ii][Pp]|[Gg][Bb][Xx])[\t\n\r]*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="InstallFileName">
+    <xs:annotation>
+      <xs:documentation>A FileName whose first folder is not Config, Profiles or Scores (any case).</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="FileName">
+      <xs:pattern value="[\t\n\r]*([^CcPpSs\t\n\r][\s\S]*|[Cc]([^Oo][\s\S]*|[Oo]([^Nn][\s\S]*|[Nn]([^Ff][\s\S]*|[Ff]([^Ii][\s\S]*|[Ii]([^Gg][\s\S]*|[Gg]([^\\/][\s\S]*)?)?)?)?)?)?|[Pp]([^Rr][\s\S]*|[Rr]([^Oo][\s\S]*|[Oo]([^Ff][\s\S]*|[Ff]([^Ii][\s\S]*|[Ii]([^Ll][\s\S]*|[Ll]([^Ee][\s\S]*|[Ee]([^Ss][\s\S]*|[Ss]([^\\/][\s\S]*)?)?)?)?)?)?)?)?|[Ss]([^Cc][\s\S]*|[Cc]([^Oo][\s\S]*|[Oo]([^Rr][\s\S]*|[Rr]([^Ee][\s\S]*|[Ee]([^Ss][\s\S]*|[Ss]([^\\/][\s\S]*)?)?)?)?)?)?)"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="IpAddress">
+    <xs:annotation>
+      <xs:documentation>IPv4 address with an optional port, for example 1.2.3.4:2350. Host names are invalid.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\s*\+?0*(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(\.\s*\+?0*(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])){3}(:\s*\+?0*(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[0-9]{1,4}))?\s*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="Email">
+    <xs:annotation>
+      <xs:documentation>An address as the game checks it, without surrounding whitespace. The top-level domain is two letters or one of: aero, biz, cat, com, coop, edu, gov, info, int, jobs, mil, mobi, museum, name, net, org, pro, tel, travel.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>friend@example.com</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[a-zA-Z0-9_%+.\-]+@[a-zA-Z0-9.\-]+\.([a-zA-Z]{2}|[Aa][Ee][Rr][Oo]|[Bb][Ii][Zz]|[Cc][Aa][Tt]|[Cc][Oo][Mm]|[Cc][Oo][Oo][Pp]|[Ee][Dd][Uu]|[Gg][Oo][Vv]|[Ii][Nn][Ff][Oo]|[Ii][Nn][Tt]|[Jj][Oo][Bb][Ss]|[Mm][Ii][Ll]|[Mm][Oo][Bb][Ii]|[Mm][Uu][Ss][Ee][Uu][Mm]|[Nn][Aa][Mm][Ee]|[Nn][Ee][Tt]|[Oo][Rr][Gg]|[Pp][Rr][Oo]|[Tt][Ee][Ll]|[Tt][Rr][Aa][Vv][Ee][Ll])"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

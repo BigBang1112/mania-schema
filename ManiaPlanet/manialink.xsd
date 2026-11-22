@@ -1,0 +1,2418 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ManiaPlanet Manialink XML schema (XSD 1.0, no target namespace)
+
+  Derived by static analysis of ManiaPlanetLogs.exe
+    file version  2019.11.19.1842
+    SHA-256       6AC97A32F75F7BD4242D15DEA986409FFD9809565A3FA8C32FF1068D193DD555
+
+  Use:
+    <manialink version="3"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:noNamespaceSchemaLocation="manialink.xsd">
+
+  The engine ignores XML namespaces. To validate a page that declares xmlns, remove it.
+
+  Conventions:
+    * An element or attribute is declared where the engine reads it. Names are case-sensitive.
+    * The engine never rejects a bad value: it ignores it, or uses false, zero or a default.
+      This schema reports such values as errors.
+    * Case sensitivity of values follows the engine and differs per attribute.
+    * "v<3", "v2+" and so on refer to <manialink version>. XSD 1.0 cannot enforce those
+      conditions, so they are documented on the declarations.
+    * Controls accept data-* attributes. XSD 1.0 cannot express that name pattern, so controls
+      have an attribute wildcard. Consequence: a misspelled attribute NAME on a control is not
+      reported. Values of known attributes are still checked.
+
+  Sources in the binary (image base 140000000):
+    Page root            140e2feb0  CGameManialinkPage::SetManialinkContent
+    Tag dispatch         140ea0830  CGameManialinkFrame::AddChild
+    Shared attributes    14101bd00  CGameManialinkControl::LoadCommonAttributesFromXml
+    Position             14101b620  GetRelativePosition
+    Size                 14101b1a0  GetElemSize
+    Alignment            14101b0e0, 14101b2b0  GetDesired(Horizontal|Vertical)Align
+    Formatting           141019c60  CGameManialinkControl::ElemModifyManialinkFormat
+    Links                14101cb00  CGameManialinkControl::ParseUrlHandles
+    Actions              14101c890, 14101c9f0  Parse(Script)ActionAttributes
+    frame, frame3d       140ea22d0  CGameManialinkFrame::LoadFromXml
+    label                1410ea520  CGameManialinkLabel::LoadFromXml
+    quad                 141114a30  CGameManialinkQuad::LoadFromXml
+    entry                141135980  CGameManialinkEntry::LoadFromXml
+    fileentry            141136f60  CGameManialinkFileEntry::LoadFromXml
+    textedit             141137ba0  CGameManialinkTextEdit::LoadFromXml
+    gauge                141132160  CGameManialinkGauge::LoadFromXml
+    graph, curve         1411333b0, 1411ee350
+    audio, video         141134860  CGameManialinkMediaPlayer::LoadFromXml
+    minimap              141118390  CGameManialinkMiniMap::LoadFromXml
+    camera               14113b550  CGameManialinkCamera::LoadFromXml
+    playerlist           141139310  CGameManialinkPlayerList::LoadFromXml
+    Version 0 tables     14111aa50  CGameManialinkOldTable::LoadFromXml
+    stylesheet           1410d7c70  CGameManialinkStylesheet::XmlToStyle
+    3d styles, mood      14111e9d0, 14111dd90  CGameManialink3d::XmlToStyle, XmlToMood
+    dico                 140e9f030  CGameManialinkDico::Append
+    script               140e2c2c0  CGameManialinkPage::AppendScriptTextFromScriptElement
+    type, home, include  140b3e0b0  CGameCtnNetwork::OnManiaNetFileReceived
+    page timeout         140b489e0  CGameCtnNetwork::ReadManiaNetResourceTimeOut
+    redirect             140b3ec10  CGameCtnNetwork::OnManialinkRedirect
+    manialinks envelope  140c69460  ParseManialinkPage
+    Value parsers        14033cc60 (bool), 14033cf20 (color), 14016d360 (reals)
+
+  Examples in xs:documentation:
+    They are HTML for the tooltips of XML language servers, which collapse whitespace.
+    Keep each on one line, with &#10; for a line break, &#32; for indentation and &lt; for "<".
+    An annotation on a declaration hides the one on its type. If a declaration has no text of
+    its own, put the example on the type instead.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+  <!-- ============================================================ Document elements -->
+
+  <xs:element name="manialink" type="Manialink">
+    <xs:annotation>
+      <xs:documentation>A Manialink page. When nested, or inserted by include, its children are merged into the parent and its attributes are ignored.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;manialink version="3">&#10;&#32;&#32;&lt;label pos="0 0" text="Hello!"/>&#10;&lt;/manialink></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="manianet" type="Manialink">
+    <xs:annotation>
+      <xs:documentation>Alias of manialink. Accepted only for pages fetched as a file or URL, not for pages passed as text.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;manianet version="3">&#10;&#32;&#32;&lt;label pos="0 0" text="Hello!"/>&#10;&lt;/manianet></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="maniaapp" type="ManiaApp">
+    <xs:annotation>
+      <xs:documentation>A ManiaApp for the in-game browser. The first script child is the app's script.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;maniaapp>&#10;&#32;&#32;&lt;script>&lt;!--&#10;&#32;&#32;main() {&#10;&#32;&#32;&#32;&#32;while (True) yield;&#10;&#32;&#32;}&#10;&#32;&#32;-->&lt;/script>&#10;&lt;/maniaapp></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="manialinks" type="Manialinks">
+    <xs:annotation>
+      <xs:documentation>Envelope for several pages sent by a server.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;manialinks>&#10;&#32;&#32;&lt;manialink version="3" id="hud">&#10;&#32;&#32;&#32;&#32;&lt;label pos="140 80" text="Round 1"/>&#10;&#32;&#32;&lt;/manialink>&#10;&lt;/manialinks></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="redirect" type="xs:string">
+    <xs:annotation>
+      <xs:documentation>A document containing only the URL to load instead. Must not be empty.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;redirect>https://example.com/page.xml&lt;/redirect></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <!-- These are also global so that a file pulled in by include can be validated on its own. -->
+
+  <xs:element name="frame" type="Frame">
+    <xs:annotation>
+      <xs:documentation>Container that positions, clips and scrolls its children. It has no events, links or style of its own.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;frame pos="-20 10">&#10;&#32;&#32;&lt;quad size="40 20" bgcolor="000A"/>&#10;&#32;&#32;&lt;label pos="2 -2" z-index="1" text="Title"/>&#10;&lt;/frame></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="frame3d" type="Frame3d">
+    <xs:annotation>
+      <xs:documentation>3d panel with a background quad, so it takes all quad attributes. Inside another frame3d it behaves as a plain frame.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;frame3d pos="0 0" size="60 30" style3d="Generic">&#10;&#32;&#32;&lt;label z-index="1" text="Panel"/>&#10;&lt;/frame3d></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="framemodel" type="FrameModel">
+    <xs:annotation>
+      <xs:documentation>Template that is not displayed. It must appear before the frameinstance elements that use it.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;framemodel id="row">&#10;&#32;&#32;&lt;quad size="80 8" bgcolor="000A"/>&#10;&#32;&#32;&lt;label pos="2 -2" z-index="1" text="Row"/>&#10;&lt;/framemodel></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="script" type="xs:string">
+    <xs:annotation>
+      <xs:documentation>ManiaScript source, as text, CDATA or XML comments. Several script elements are concatenated in document order.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;script>&lt;!--&#10;main() {&#10;&#32;&#32;while (True) yield;&#10;}&#10;-->&lt;/script></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="dico" type="Dico">
+    <xs:annotation>
+      <xs:documentation>Translation dictionary used by the *id attributes. Children are language elements (attribute id) holding entries, or entries directly. An entry's tag name is its key and its text is the value.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;dico>&#10;&#32;&#32;&lt;language id="en">&#10;&#32;&#32;&#32;&#32;&lt;hello>Hello!&lt;/hello>&#10;&#32;&#32;&lt;/language>&#10;&lt;/dico></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="stylesheet" type="Stylesheet">
+    <xs:annotation>
+      <xs:documentation>v2+: collected from anywhere in the page. Its own attributes are the defaults for nested styles. frame3dstyles and mood are read only from the first stylesheet directly under the root, in any version.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;stylesheet>&#10;&#32;&#32;&lt;style class="title" textsize="4" textcolor="FFF"/>&#10;&lt;/stylesheet></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="include" type="Include">
+    <xs:annotation>
+      <xs:documentation>Replaced by the root element of the XML file at url. Resolved only for pages fetched as a file or URL.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;include url="./header.xml"/></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <!-- ============================================================ Content models -->
+
+  <xs:group name="FrameContent">
+    <xs:choice>
+      <xs:element ref="frame"/>
+      <xs:element ref="frame3d"/>
+      <xs:element ref="framemodel"/>
+      <xs:element name="frameinstance" type="FrameInstance">
+        <xs:annotation>
+          <xs:documentation>Copy of a framemodel. Only the shared control attributes are read from this element; everything else comes from the model.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;frameinstance modelid="row" pos="0 -10"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="label" type="Label">
+        <xs:annotation>
+          <xs:documentation>Text. Priority: text attribute, then textid, then element content.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;label pos="0 0" size="60 8" halign="center" valign="center2" text="Hello!"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="quad" type="Quad">
+        <xs:annotation>
+          <xs:documentation>Rectangle showing a color, style or image. Image priority: image attribute, stylesheet, imageid, then element content.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;quad pos="0 0" z-index="-1" size="80 40" bgcolor="000A"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="entry" type="Entry">
+        <xs:annotation>
+          <xs:documentation>Text input. The initial value comes from default; element content is not read.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;entry pos="0 0" size="60 8" name="search" default=""/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="textedit" type="TextEdit">
+        <xs:annotation>
+          <xs:documentation>v2+: multi-line text input.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;textedit pos="0 0" size="80 30" name="message" autonewline="1"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="fileentry" type="FileEntry">
+        <xs:annotation>
+          <xs:documentation>File picker. Takes every entry attribute.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;fileentry pos="0 0" size="60 8" name="map" type="map" folder="Maps"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="gauge" type="Gauge">
+        <xs:annotation>
+          <xs:documentation>Progress bar.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;gauge pos="0 0" size="60 8" ratio="0.75" color="09F"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="graph" type="Graph">
+        <xs:annotation>
+          <xs:documentation>Line graph made of curve children.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;graph pos="0 0" size="80 40" min="0 0" max="10 100">&#10;&#32;&#32;&lt;curve color="F80">&#10;&#32;&#32;&#32;&#32;&lt;point coords="0 20"/>&#10;&#32;&#32;&#32;&#32;&lt;point coords="10 90"/>&#10;&#32;&#32;&lt;/curve>&#10;&lt;/graph></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="audio" type="Media">
+        <xs:annotation>
+          <xs:documentation>Audio player. music defaults to false.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;audio pos="0 0" size="10 10" data="https://example.com/sound.ogg" play="1"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="video" type="Media">
+        <xs:annotation>
+          <xs:documentation>Video player. music defaults to true.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;video pos="0 0" size="80 45" data="https://example.com/video.webm" play="1"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="minimap" type="MiniMap">
+        <xs:annotation>
+          <xs:documentation>Map overview.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;minimap pos="0 0" size="60 60" zoomfactor="2"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="camera" type="Camera">
+        <xs:annotation>
+          <xs:documentation>Camera view. Reads only size and alignment besides the shared attributes.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;camera pos="0 0" size="80 45"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="playerlist" type="PlayerList">
+        <xs:annotation>
+          <xs:documentation>Grid of player cards. Loads only when the page's script handler is a CGameScriptHandlerPlaygroundInterface.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;playerlist pos="-150 80" lines="8" columns="1" team="1"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="format" type="Format">
+        <xs:annotation>
+          <xs:documentation>v&lt;2: sets the default formatting of the following siblings. Ignored in v2+.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;format textsize="2" textcolor="FFF"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element ref="script"/>
+      <xs:element ref="dico"/>
+      <xs:element ref="stylesheet"/>
+      <xs:element ref="include"/>
+      <xs:element ref="manialink"/>
+    </xs:choice>
+  </xs:group>
+
+  <xs:group name="OnlyIncludes">
+    <xs:sequence>
+      <xs:element ref="include" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:group>
+
+  <!-- ============================================================ Pages -->
+
+  <xs:complexType name="Manialink">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:group ref="FrameContent"/>
+      <xs:element name="type" type="ResourceType">
+        <xs:annotation>
+          <xs:documentation>Resource type. A fetched page fails to load unless this is default or absent.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;type>default&lt;/type></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="timeout" type="PageTimeout">
+        <xs:annotation>
+          <xs:documentation>Cache lifetime of a fetched page, in seconds.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;timeout>3600&lt;/timeout></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="home" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Home URL of the site, used for manialink statistics.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;home>https://example.com/index.xml&lt;/home></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="nohome" type="Empty">
+        <xs:annotation>
+          <xs:documentation>Its presence disables home and manialink statistics.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;nohome/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="music" type="Music">
+        <xs:annotation>
+          <xs:documentation>Background music of the browser. Only the first one directly under the root is read.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;music data="https://example.com/music.ogg"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="background" type="TableBackground">
+        <xs:annotation>
+          <xs:documentation>v0 only: background of the table layout.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;background bgcolor="000A"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="line" type="TableLine">
+        <xs:annotation>
+          <xs:documentation>v0 only: row of the table layout.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;line height="8">&#10;&#32;&#32;&lt;cell width="40">&lt;text>Player&lt;/text>&lt;/cell>&#10;&lt;/line></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:choice>
+    <xs:attribute name="version" type="Version">
+      <xs:annotation>
+        <xs:documentation>Layout and parser version. When absent, the host's default applies, which is 0 unless the host sets another. Version 3 enables pos, size and z-index.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>version="3"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="name" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Page name.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>name="Main menu"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="background" type="Background">
+      <xs:annotation>
+        <xs:documentation>default_image, hide, stars, stations or title (any case). A boolean also works: true is default_image and false is hide.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>background="stars"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="navigable3d" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Whether the 3d page can be navigated. Default true.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>navigable3d="false"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="bounds3dn" type="Vec4">
+      <xs:annotation>
+        <xs:documentation>"minX minY maxX maxY". Ignored unless each min is below its max.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>bounds3dn="-1 -1 1 1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="posx" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>Page X position. Read only if the host allows pages to position themselves.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>posx="10"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="posy" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>Page Y position. Read only if the host allows pages to position themselves.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>posy="-20"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="id" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Page identifier, read for pages sent by a server.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>id="hud"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="layer" type="Layer">
+      <xs:annotation>
+        <xs:documentation>UI layer, read for pages sent by a server. Any case. Default Normal.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>layer="ScoresTable"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="override" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Read for pages sent by a server. Default false.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>override="true"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <!-- The root is loaded as the main frame, so it also takes the frame attributes. -->
+    <xs:attributeGroup ref="FrameAttributes"/>
+    <xs:attributeGroup ref="PlacementAttributes"/>
+  </xs:complexType>
+
+  <xs:complexType name="ManiaApp">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element ref="script"/>
+      <xs:element ref="include"/>
+      <xs:element name="type" type="ResourceType">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;type>default&lt;/type></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="timeout" type="PageTimeout">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;timeout>3600&lt;/timeout></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="home" type="xs:string">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;home>https://example.com/index.xml&lt;/home></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="nohome" type="Empty">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;nohome/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:choice>
+    <xs:attribute name="background" type="Background">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>background="stars"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="Manialinks">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element ref="manialink"/>
+      <xs:element name="custom_ui" type="CustomUi">
+        <xs:annotation>
+          <xs:documentation>Shows or hides built-in HUD modules. Only the first one is read.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;custom_ui>&#10;&#32;&#32;&lt;chat visible="false"/>&#10;&lt;/custom_ui></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="CustomUi">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="notice" type="CustomUiModule">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;notice visible="false"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="challenge_info" type="CustomUiModule">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;challenge_info visible="false"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="map_info" type="CustomUiModule">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;map_info visible="false"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="net_infos" type="CustomUiModule">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;net_infos visible="false"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="net_info" type="CustomUiModule">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;net_info visible="false"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="opponents_info" type="CustomUiModule">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;opponents_info visible="false"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="chat" type="CustomUiModule">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;chat visible="false"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="checkpoint_list" type="CustomUiModule">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;checkpoint_list visible="false"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="round_scores" type="CustomUiModule">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;round_scores visible="false"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="altmenu_scores" type="CustomUiModule">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;altmenu_scores visible="false"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="manualscoretable" type="CustomUiModule">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;manualscoretable visible="false"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="scoretable" type="CustomUiModule">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;scoretable visible="false"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="global" type="CustomUiModule">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;global visible="false"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="CustomUiModule">
+    <xs:group ref="OnlyIncludes"/>
+    <xs:attribute name="visible" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Default true.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>visible="false"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="Music">
+    <xs:group ref="OnlyIncludes"/>
+    <xs:attribute name="data" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>URL of the audio file.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>data="https://example.com/music.ogg"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="Include">
+    <xs:attribute name="url" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>URL, relative to the including page.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>url="./header.xml"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="Empty">
+    <xs:group ref="OnlyIncludes"/>
+  </xs:complexType>
+
+  <xs:complexType name="Dico">
+    <xs:sequence>
+      <!-- Entry names are arbitrary and may equal any tag name, so they are not validated. -->
+      <xs:any minOccurs="0" maxOccurs="unbounded" processContents="skip"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- ============================================================ Containers -->
+
+  <xs:complexType name="Frame">
+    <xs:group ref="FrameContent" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:attributeGroup ref="ControlAttributes"/>
+    <xs:attributeGroup ref="PlacementAttributes"/>
+    <xs:attributeGroup ref="FrameAttributes"/>
+  </xs:complexType>
+
+  <xs:complexType name="Frame3d">
+    <xs:group ref="FrameContent" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:attributeGroup ref="ControlAttributes"/>
+    <xs:attributeGroup ref="PlacementAttributes"/>
+    <xs:attributeGroup ref="FrameAttributes"/>
+    <xs:attributeGroup ref="InteractionAttributes"/>
+    <xs:attributeGroup ref="StyleAttributes"/>
+    <xs:attributeGroup ref="FormatAttributes"/>
+    <xs:attributeGroup ref="QuadAttributes"/>
+    <xs:attribute name="style3d" type="Style3dName">
+      <xs:annotation>
+        <xs:documentation>Id of a 3d style. Names shorter than 2 characters are ignored. Default Generic.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>style3d="Generic"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="quadbg" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Default false.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>quadbg="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="FrameModel">
+    <xs:group ref="FrameContent" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:attribute name="id" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>Name referenced by frameinstance modelid.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>id="row"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attributeGroup ref="PlacementAttributes"/>
+    <xs:attributeGroup ref="FrameAttributes"/>
+    <xs:attributeGroup ref="ControlAttributesWithoutId"/>
+  </xs:complexType>
+
+  <xs:complexType name="FrameInstance">
+    <xs:group ref="OnlyIncludes"/>
+    <xs:attribute name="modelid" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>Id of a framemodel defined earlier. It cannot be an ancestor of this element.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>modelid="row"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attributeGroup ref="ControlAttributes"/>
+  </xs:complexType>
+
+  <!-- ============================================================ Controls -->
+
+  <xs:complexType name="Label">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute name="text" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>Displayed text. Takes precedence over textid and element content.</xs:documentation>
+            <xs:documentation><![CDATA[Example: <code>text="Hello!"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="textid" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>Dictionary key of the text.</xs:documentation>
+            <xs:documentation><![CDATA[Example: <code>textid="hello"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="translate" type="Bool">
+          <xs:annotation>
+            <xs:documentation>Forces translation on or off. Automatic when absent or empty.</xs:documentation>
+            <xs:documentation><![CDATA[Example: <code>translate="1"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="autonewline" type="Bool">
+          <xs:annotation>
+            <xs:documentation>Wrap text to the width.</xs:documentation>
+            <xs:documentation><![CDATA[Example: <code>autonewline="1"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="maxline" type="xs:int">
+          <xs:annotation>
+            <xs:documentation>Maximum number of lines.</xs:documentation>
+            <xs:documentation><![CDATA[Example: <code>maxline="3"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="linespacing" type="xs:float">
+          <xs:annotation>
+            <xs:documentation>Line spacing factor.</xs:documentation>
+            <xs:documentation><![CDATA[Example: <code>linespacing="1.2"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="appendellipsis" type="Bool">
+          <xs:annotation>
+            <xs:documentation>End truncated text with an ellipsis. Default false.</xs:documentation>
+            <xs:documentation><![CDATA[Example: <code>appendellipsis="1"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="blend" type="Blend">
+          <xs:annotation>
+            <xs:documentation>Default or Add (any case).</xs:documentation>
+            <xs:documentation><![CDATA[Example: <code>blend="Add"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attributeGroup ref="ControlAttributes"/>
+        <xs:attributeGroup ref="PlacementAttributes"/>
+        <xs:attributeGroup ref="InteractionAttributes"/>
+        <xs:attributeGroup ref="StyleAttributes"/>
+        <xs:attributeGroup ref="FormatAttributes"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="Quad">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attributeGroup ref="ControlAttributes"/>
+        <xs:attributeGroup ref="PlacementAttributes"/>
+        <xs:attributeGroup ref="InteractionAttributes"/>
+        <xs:attributeGroup ref="StyleAttributes"/>
+        <xs:attributeGroup ref="FormatAttributes"/>
+        <xs:attributeGroup ref="QuadAttributes"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="Entry">
+    <xs:group ref="OnlyIncludes"/>
+    <xs:attributeGroup ref="InputAttributes"/>
+    <xs:attribute name="selecttext" type="Bool">
+      <xs:annotation>
+        <xs:documentation>v2+. Default false.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>selecttext="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="entertosubmit" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Requires scriptevents; otherwise the engine logs an error and ignores it.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>entertosubmit="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="autonewline" type="Bool">
+      <xs:annotation>
+        <xs:documentation>v&lt;2 only. Always false in v2+.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>autonewline="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="maxline" type="xs:int">
+      <xs:annotation>
+        <xs:documentation>v&lt;2 only. Always -1 in v2+.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>maxline="3"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attributeGroup ref="ControlAttributes"/>
+    <xs:attributeGroup ref="PlacementAttributes"/>
+    <xs:attributeGroup ref="FormatAttributes"/>
+  </xs:complexType>
+
+  <xs:complexType name="FileEntry">
+    <xs:complexContent>
+      <xs:extension base="Entry">
+        <xs:attribute name="type" type="FileType">
+          <xs:annotation>
+            <xs:documentation>Accepted kind of file (any case). challenge is an alias of map.</xs:documentation>
+            <xs:documentation><![CDATA[Example: <code>type="map"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="folder" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>Folder to browse.</xs:documentation>
+            <xs:documentation><![CDATA[Example: <code>folder="Maps"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="only_user_files" type="StrictBool">
+          <xs:annotation>
+            <xs:documentation>Read by a different parser: only lowercase true or false, or an integer. Default false.</xs:documentation>
+            <xs:documentation><![CDATA[Example: <code>only_user_files="true"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="TextEdit">
+    <xs:group ref="OnlyIncludes"/>
+    <xs:attributeGroup ref="InputAttributes"/>
+    <xs:attribute name="autonewline" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Wrap text to the width.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>autonewline="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="maxline" type="xs:int">
+      <xs:annotation>
+        <xs:documentation>-1 becomes 0 and lower values become 1.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>maxline="3"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="linespacing" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>linespacing="1.2"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="showlinenumbers" type="Bool">
+      <xs:annotation>
+        <xs:documentation>When absent, the engine copies the stylesheet's autonewline instead of its showlinenumbers (engine bug).</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>showlinenumbers="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="submitonenter" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Submit when Enter is pressed.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>submitonenter="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attributeGroup ref="ControlAttributes"/>
+    <xs:attributeGroup ref="PlacementAttributes"/>
+    <xs:attributeGroup ref="FormatAttributes"/>
+  </xs:complexType>
+
+  <xs:complexType name="Gauge">
+    <xs:group ref="OnlyIncludes"/>
+    <xs:attribute name="ratio" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>Fill ratio.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>ratio="0.75"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="grading" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>Grading ratio.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>grading="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="color" type="HexColor">
+      <xs:annotation>
+        <xs:documentation>Bar color. Hex only.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>color="09F"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="centered" type="Bool"/>
+    <xs:attribute name="drawbg" type="Bool"/>
+    <xs:attribute name="drawblockbg" type="Bool"/>
+    <xs:attribute name="clan" type="xs:int">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>clan="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="rotation" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>v&lt;2 only. Use rot in later versions.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>rotation="90"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="style" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Gauge style name.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>style="ProgressBar"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attributeGroup ref="ControlAttributes"/>
+    <xs:attributeGroup ref="PlacementAttributes"/>
+  </xs:complexType>
+
+  <xs:complexType name="Graph">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="curve" type="Curve">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;curve color="F80">&#10;&#32;&#32;&lt;point coords="0 20"/>&#10;&#32;&#32;&lt;point coords="10 90"/>&#10;&lt;/curve></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element ref="include"/>
+    </xs:choice>
+    <xs:attribute name="min" type="Vec2">
+      <xs:annotation>
+        <xs:documentation>"x y" lower bound of the coordinates.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>min="0 0"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="max" type="Vec2">
+      <xs:annotation>
+        <xs:documentation>"x y" upper bound of the coordinates.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>max="10 100"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attributeGroup ref="ControlAttributes"/>
+    <xs:attributeGroup ref="PlacementAttributes"/>
+  </xs:complexType>
+
+  <xs:complexType name="Curve">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="point" type="Point">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;point coords="10 90"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element ref="include"/>
+    </xs:choice>
+    <xs:attribute name="color" type="Color"/>
+    <xs:attribute name="style" type="xs:string">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>style="thin"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="width" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>width="0.5"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="values" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>The engine looks this up but never uses it. Use point children.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="Point">
+    <xs:group ref="OnlyIncludes"/>
+    <xs:attribute name="coords" type="Vec2" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="Media">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute name="data" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>Media URL. Priority: data, dataid, then element content.</xs:documentation>
+            <xs:documentation><![CDATA[Example: <code>data="https://example.com/music.ogg"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="dataid" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>Dictionary key of the URL.</xs:documentation>
+            <xs:documentation><![CDATA[Example: <code>dataid="theme_music"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="play" type="Bool">
+          <xs:annotation>
+            <xs:documentation>Start playing immediately. Default false.</xs:documentation>
+            <xs:documentation><![CDATA[Example: <code>play="1"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="looping" type="Bool">
+          <xs:annotation>
+            <xs:documentation>Default true.</xs:documentation>
+            <xs:documentation><![CDATA[Example: <code>looping="0"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="music" type="Bool">
+          <xs:annotation>
+            <xs:documentation>Treat as music. Default false for audio, true for video.</xs:documentation>
+            <xs:documentation><![CDATA[Example: <code>music="1"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="volume" type="xs:float">
+          <xs:annotation>
+            <xs:documentation><![CDATA[Example: <code>volume="0.5"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attributeGroup ref="ControlAttributes"/>
+        <xs:attributeGroup ref="PlacementAttributes"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="MiniMap">
+    <xs:group ref="OnlyIncludes"/>
+    <xs:attribute name="worldposition" type="Vec3">
+      <xs:annotation>
+        <xs:documentation>"x y z" in world coordinates.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>worldposition="512 40 512"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="mapposition" type="Vec2">
+      <xs:annotation>
+        <xs:documentation>"x y" on the map.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>mapposition="0.5 0.5"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="mapyaw" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>mapyaw="90"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="underground" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Default false.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>underground="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="zoomfactor" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>Clamped to the range 0.5 to 10.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>zoomfactor="2"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attributeGroup ref="ControlAttributes"/>
+    <xs:attributeGroup ref="PlacementAttributes"/>
+    <xs:attributeGroup ref="InteractionAttributes"/>
+  </xs:complexType>
+
+  <xs:complexType name="Camera">
+    <xs:group ref="OnlyIncludes"/>
+    <xs:attributeGroup ref="ControlAttributes"/>
+    <xs:attributeGroup ref="PlacementAttributes"/>
+  </xs:complexType>
+
+  <xs:complexType name="PlayerList">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="player" type="Player">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;player login="example_player" nickname="Example"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element ref="include"/>
+    </xs:choice>
+    <xs:attribute name="lines" type="xs:int">
+      <xs:annotation>
+        <xs:documentation>At most 50, further limited by the card style.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>lines="8"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="columns" type="xs:int">
+      <xs:annotation>
+        <xs:documentation>At most 50, further limited by the card style.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>columns="2"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="static" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Show only the player children. Forced on when any player child exists.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>static="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="team" type="xs:int">
+      <xs:annotation>
+        <xs:documentation>1 or 2 filters by team. Any other value means no filter.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>team="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="status" type="PlayerStatus">
+      <xs:annotation>
+        <xs:documentation>Filter by status. Case-sensitive.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>status="Playing"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="logins" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Filter by logins.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>logins="example_player"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="halign" type="HAlign">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>halign="center"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="valign" type="VAlign">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>valign="center"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attributeGroup ref="StyleAttributes"/>
+    <xs:attributeGroup ref="ControlAttributes"/>
+  </xs:complexType>
+
+  <xs:complexType name="Player">
+    <xs:group ref="OnlyIncludes"/>
+    <xs:attribute name="login" type="xs:string">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>login="example_player"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="nickname" type="xs:string">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>nickname="Example"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="isalive" type="Bool"/>
+    <xs:attribute name="lastgradingisghostlike" type="Bool"/>
+    <xs:attribute name="armorratio" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>Used only when strictly between 0 and 1.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>armorratio="0.75"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="armorgradingratio" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>Used only when above 0 and at most 1.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>armorgradingratio="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="energyratio" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>Used only when strictly between 0 and 1.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>energyratio="0.5"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="energygradingratio" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>Used only when above 0 and at most 1.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>energygradingratio="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="staminaratio" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>Used only when strictly between 0 and 1.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>staminaratio="0.5"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="Format">
+    <xs:group ref="OnlyIncludes"/>
+    <xs:attributeGroup ref="StyleAttributes"/>
+    <xs:attributeGroup ref="FormatAttributes"/>
+  </xs:complexType>
+
+  <!-- ============================================================ Version 0 tables -->
+
+  <xs:complexType name="TableBackground">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attributeGroup ref="StyleAttributes"/>
+        <xs:attributeGroup ref="TableFormatAttributes"/>
+        <xs:attributeGroup ref="TableImageAttributes"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="TableLine">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="cell" type="TableCell">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;cell width="40">&lt;text>Player&lt;/text>&lt;/cell></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="format" type="TableFormat">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;format textsize="2" textcolor="FFF"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element ref="include"/>
+    </xs:choice>
+    <xs:attribute name="height" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>height="8"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="TableCell">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="text" type="TableText">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;text>Player&lt;/text></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="icon" type="TableIcon">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;icon width="8" height="8" image="https://example.com/icon.png"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="entry" type="TableEntry">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;entry width="40" height="6" name="search"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="fileentry" type="TableFileEntry">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;fileentry width="40" height="6" name="map" type="map"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="audio" type="TableMedia">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;audio width="10" height="10" data="https://example.com/sound.ogg" play="1"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="video" type="TableMedia">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;video width="80" height="45" data="https://example.com/video.webm" play="1"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="format" type="TableFormat">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;format textsize="2" textcolor="FFF"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element ref="include"/>
+    </xs:choice>
+    <xs:attributeGroup ref="TableSizeAttributes"/>
+    <xs:attributeGroup ref="StyleAttributes"/>
+    <xs:attributeGroup ref="TableFormatAttributes"/>
+    <xs:attributeGroup ref="TableImageAttributes"/>
+  </xs:complexType>
+
+  <xs:complexType name="TableFormat">
+    <xs:group ref="OnlyIncludes"/>
+    <xs:attributeGroup ref="StyleAttributes"/>
+    <xs:attributeGroup ref="TableFormatAttributes"/>
+  </xs:complexType>
+
+  <xs:complexType name="TableText">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute name="text" type="xs:string">
+          <xs:annotation>
+            <xs:documentation><![CDATA[Example: <code>text="Hello!"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="textid" type="xs:string">
+          <xs:annotation>
+            <xs:documentation><![CDATA[Example: <code>textid="hello"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="maxline" type="xs:int">
+          <xs:annotation>
+            <xs:documentation><![CDATA[Example: <code>maxline="3"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attributeGroup ref="TableLinkAttributes"/>
+        <xs:attributeGroup ref="TableSizeAttributes"/>
+        <xs:attributeGroup ref="StyleAttributes"/>
+        <xs:attributeGroup ref="TableFormatAttributes"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="TableIcon">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attributeGroup ref="TableLinkAttributes"/>
+        <xs:attributeGroup ref="TableSizeAttributes"/>
+        <xs:attributeGroup ref="StyleAttributes"/>
+        <xs:attributeGroup ref="TableFormatAttributes"/>
+        <xs:attributeGroup ref="TableImageAttributes"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="TableEntry">
+    <xs:complexContent>
+      <xs:extension base="Entry">
+        <xs:attribute name="width" type="xs:float">
+          <xs:annotation>
+            <xs:documentation><![CDATA[Example: <code>width="40"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="height" type="xs:float">
+          <xs:annotation>
+            <xs:documentation><![CDATA[Example: <code>height="8"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="TableFileEntry">
+    <xs:complexContent>
+      <xs:extension base="FileEntry">
+        <xs:attribute name="width" type="xs:float">
+          <xs:annotation>
+            <xs:documentation><![CDATA[Example: <code>width="40"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="height" type="xs:float">
+          <xs:annotation>
+            <xs:documentation><![CDATA[Example: <code>height="8"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="TableMedia">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute name="data" type="xs:string">
+          <xs:annotation>
+            <xs:documentation><![CDATA[Example: <code>data="https://example.com/music.ogg"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="dataid" type="xs:string">
+          <xs:annotation>
+            <xs:documentation><![CDATA[Example: <code>dataid="theme_music"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="play" type="xs:int">
+          <xs:annotation>
+            <xs:documentation>Integer here, unlike on audio and video controls. Default 0.</xs:documentation>
+            <xs:documentation><![CDATA[Example: <code>play="1"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="looping" type="xs:int">
+          <xs:annotation>
+            <xs:documentation>Integer here, unlike on audio and video controls. Default 1.</xs:documentation>
+            <xs:documentation><![CDATA[Example: <code>looping="0"</code>]]></xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attributeGroup ref="TableSizeAttributes"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <!-- ============================================================ Stylesheets -->
+
+  <xs:complexType name="Stylesheet">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="style" type="Style">
+        <xs:annotation>
+          <xs:documentation>Values for controls matched by id, or else by their first matching class.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;style class="title" textsize="4" textcolor="FFF"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="frame3dstyles" type="Frame3dStyles">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;frame3dstyles>&#10;&#32;&#32;&lt;style3d id="panel" model="Box" color="036"/>&#10;&lt;/frame3dstyles></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="mood" type="Mood">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;mood LDir0_Intens="1">&#10;&#32;&#32;&lt;skygradient>&#10;&#32;&#32;&#32;&#32;&lt;key x="0" color="036"/>&#10;&#32;&#32;&lt;/skygradient>&#10;&lt;/mood></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element ref="include"/>
+    </xs:choice>
+    <xs:attributeGroup ref="StylesheetAttributes"/>
+  </xs:complexType>
+
+  <xs:complexType name="Style">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="style" type="Style">
+        <xs:annotation>
+          <xs:documentation>A nested style inherits from its parent.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;style class="title" textsize="4" textcolor="FFF"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element ref="include"/>
+    </xs:choice>
+    <xs:attributeGroup ref="StylesheetAttributes"/>
+  </xs:complexType>
+
+  <xs:complexType name="Frame3dStyles">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="style3d" type="Style3d">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;style3d id="panel" model="Box" color="036"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element ref="include"/>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="Style3d">
+    <xs:group ref="OnlyIncludes"/>
+    <xs:attribute name="id" type="xs:string">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>id="panel"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="model" type="xs:string">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>model="Box"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="thickness" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>thickness="2"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="color" type="HexColor"/>
+    <xs:attribute name="lightcolor" type="HexColor"/>
+    <xs:attribute name="zoffset" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>zoffset="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="yoffset" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>yoffset="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="fcolor" type="HexColor">
+      <xs:annotation>
+        <xs:documentation>color when focused.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>fcolor="06C"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="flightcolor" type="HexColor">
+      <xs:annotation>
+        <xs:documentation>lightcolor when focused.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>flightcolor="9CF"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="fzoffset" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>zoffset when focused.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>fzoffset="2"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="fyoffset" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>yoffset when focused.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>fyoffset="2"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="Mood">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="skygradient" type="SkyGradient">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;skygradient scale="1">&#10;&#32;&#32;&lt;key x="0" color="036"/>&#10;&#32;&#32;&lt;key x="1" color="9CF"/>&#10;&lt;/skygradient></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element ref="include"/>
+    </xs:choice>
+    <xs:attribute name="LAmbient_LinearRgb" type="Vec3"/>
+    <xs:attribute name="LDir0_LinearRgb" type="Vec3"/>
+    <xs:attribute name="LDir0_Intens" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>LDir0_Intens="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="LDir0_DirTheta" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>LDir0_DirTheta="45"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="LDir0_DirPhi" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>LDir0_DirPhi="30"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="LDir1_LinearRgb" type="Vec3"/>
+    <xs:attribute name="LDir1_Intens" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>LDir1_Intens="0.5"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="LDir1_DirTheta" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>LDir1_DirTheta="45"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="LDir1_DirPhi" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>LDir1_DirPhi="210"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="LBall_LinearRgb" type="Vec3"/>
+    <xs:attribute name="LBall_Intens" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>LBall_Intens="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="LBall_Radius" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>LBall_Radius="50"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="CloudsRgbMinLinear" type="Vec3"/>
+    <xs:attribute name="CloudsRgbMaxLinear" type="Vec3"/>
+    <xs:attribute name="CloudsRgbMinScale" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>CloudsRgbMinScale="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="CloudsRgbMaxScale" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>CloudsRgbMaxScale="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="FogColorSrgb" type="Vec3"/>
+    <xs:attribute name="SkyGradientV_Scale" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>SkyGradientV_Scale="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="SelfIllumColor" type="Vec3"/>
+    <xs:attribute name="SkyGradientXAsTimeOfDay" type="Bool"/>
+  </xs:complexType>
+
+  <xs:complexType name="SkyGradient">
+    <xs:sequence>
+      <!-- The engine stops after the fourth key. -->
+      <xs:element name="key" type="SkyGradientKey" minOccurs="0" maxOccurs="4">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;key x="0.5" color="9CF"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="scale" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>Default scale of the keys. Default 1.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>scale="0.8"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="SkyGradientKey">
+    <xs:group ref="OnlyIncludes"/>
+    <xs:attribute name="x" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>x="0.5"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="color" type="HexColor"/>
+    <xs:attribute name="scale" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>scale="0.8"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <!-- ============================================================ Attribute groups -->
+
+  <xs:attributeGroup name="ControlAttributes">
+    <xs:attribute name="id" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Control id, used by scripts and stylesheets.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>id="example"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attributeGroup ref="ControlAttributesWithoutId"/>
+  </xs:attributeGroup>
+
+  <xs:attributeGroup name="ControlAttributesWithoutId">
+    <xs:attribute name="class" type="ClassList">
+      <xs:annotation>
+        <xs:documentation>Whitespace-separated names of letters, digits, '-', '_' and '.'. Other names are dropped by the engine.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>class="title highlight"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="hidden" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Initially hidden.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>hidden="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="pos" type="PartialVec2">
+      <xs:annotation>
+        <xs:documentation>v3+: "x y" relative to the parent. A single number is x, with y = 0.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>pos="10 -20"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="posn" type="PartialVec3">
+      <xs:annotation>
+        <xs:documentation>"x y z" in v&lt;3. In v3+ only x and y are used, and only when pos is absent. Missing numbers are 0.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>posn="10 -20 1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="z-index" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>v3+: stacking order among siblings. Decimals are allowed.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>z-index="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="rot" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>Rotation in degrees.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>rot="45"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="scale" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>Scale factor.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>scale="0.8"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="tooltip" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Tooltip text.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>tooltip="Open the menu"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="timeout" type="xs:int">
+      <xs:annotation>
+        <xs:documentation>Cache validity of the control's media, in seconds. Negative or absent uses the cached data. 0 disables caching.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>timeout="3600"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:anyAttribute namespace="##local" processContents="lax">
+      <xs:annotation>
+        <xs:documentation>For data-* attributes, readable from script with DataAttributeGet.</xs:documentation>
+      </xs:annotation>
+    </xs:anyAttribute>
+  </xs:attributeGroup>
+
+  <xs:attributeGroup name="PlacementAttributes">
+    <xs:attribute name="size" type="PartialVec2">
+      <xs:annotation>
+        <xs:documentation>v3+: "width height". A single number is the width. Outside v0 tables, earlier versions read sizen only.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>size="60 8"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="sizen" type="PartialVec2">
+      <xs:annotation>
+        <xs:documentation>"width height". In v3+ it is used only when size is absent.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>sizen="60 8"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="halign" type="HAlign">
+      <xs:annotation>
+        <xs:documentation>Case-sensitive. On frame, framemodel and the root it applies only in v3+ with a size.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>halign="center"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="valign" type="VAlign">
+      <xs:annotation>
+        <xs:documentation>Case-sensitive. On frame, framemodel and the root it applies only in v3+ with a size.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>valign="center"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+
+  <xs:attributeGroup name="FrameAttributes">
+    <xs:attribute name="clip" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Clip children to the clip window. Default false.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>clip="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="clipposn" type="PartialVec2">
+      <xs:annotation>
+        <xs:documentation>Position of the clip window. Default "0 0". A single number sets x only.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>clipposn="0 0"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="clipsizen" type="PartialVec2">
+      <xs:annotation>
+        <xs:documentation>Size of the clip window. Default "1 1". A single number sets the width only.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>clipsizen="80 40"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="disablepreload" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Do not preload the children's resources. Default false.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>disablepreload="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="scroll" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Enable scrolling. Default false.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>scroll="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="scrollmin" type="PartialVec2">
+      <xs:annotation>
+        <xs:documentation>Default "0 0".</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>scrollmin="0 0"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="scrollmax" type="PartialVec2">
+      <xs:annotation>
+        <xs:documentation>Default "0 0".</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>scrollmax="0 100"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="scrollgrid" type="PartialVec2">
+      <xs:annotation>
+        <xs:documentation>Scroll step.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>scrollgrid="0 10"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="scrollgridsnap" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Snap scrolling to scrollgrid. Default false.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>scrollgridsnap="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+
+  <xs:attributeGroup name="InteractionAttributes">
+    <xs:attribute name="action" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Action sent to the host. Parameters follow the name, separated by apostrophes: name'param1'param2.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>action="vote'yes"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="actionkey" type="xs:int">
+      <xs:annotation>
+        <xs:documentation>Action key number. Read only together with action.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>actionkey="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="scriptaction" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Action sent to the page's script, with the same syntax as action.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>scriptaction="select'2"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attributeGroup ref="ScriptEventAttributes"/>
+    <!-- The first non-empty link wins, in the order listed here. -->
+    <xs:attribute name="external" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Link opened outside the game. Link priority 1 of 9.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>external="https://example.com/"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="manialink" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Manialink opened in the in-game browser. Link priority 2 of 9.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>manialink="https://example.com/page.xml"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="goto" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Goto link. Link priority 3 of 9.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>goto="https://example.com/page.xml"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="externalid" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Dictionary key for external. Link priority 4 of 9.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>externalid="website"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="manialinkid" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Dictionary key for manialink. Link priority 5 of 9.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>manialinkid="next_page"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="gotoid" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Dictionary key for goto. Link priority 6 of 9.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>gotoid="next_page"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="url" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Older name of external. Link priority 7 of 9.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>url="https://example.com/"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="maniazone" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Older name of goto. Link priority 8 of 9.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>maniazone="example"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="urlid" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Dictionary key for url. Link priority 9 of 9.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>urlid="website"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+
+  <xs:attributeGroup name="ScriptEventAttributes">
+    <xs:attribute name="scriptevents" type="PresenceFlag">
+      <xs:annotation>
+        <xs:documentation>Enables script events by its presence alone: "0" and "false" also enable them. Omit it to disable.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>scriptevents="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="ScriptEvents" type="PresenceFlag">
+      <xs:annotation>
+        <xs:documentation>The only other accepted spelling of scriptevents.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>ScriptEvents="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+
+  <xs:attributeGroup name="InputAttributes">
+    <xs:attribute name="name" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Field name, substituted in actions and links.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>name="search"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="default" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Initial value.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>default="Initial text"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="textformat" type="TextFormat">
+      <xs:annotation>
+        <xs:documentation>v2+. Case-sensitive. An unknown value becomes Basic.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>textformat="Password"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="style" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Style name.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>style="TextValueSmall"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="substyle" type="EmptyString">
+      <xs:annotation>
+        <xs:documentation>Must be empty: the engine asserts on a substyle for entry and textedit.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attributeGroup ref="ScriptEventAttributes"/>
+  </xs:attributeGroup>
+
+  <xs:attributeGroup name="StyleAttributes">
+    <xs:attribute name="style" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Style name from the game or title's stylesheet. The set is data-driven, so it is not enumerated.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>style="Bgs1InRace"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="substyle" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Substyle within style.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>substyle="BgList"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+
+  <xs:attributeGroup name="FormatAttributes">
+    <xs:attribute name="opacity" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>Clamped to the range 0 to 1.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>opacity="0.5"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="textcolor" type="Color"/>
+    <xs:attribute name="textsize" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>textsize="2"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="textprefix" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Prepended to the text, usually formatting codes.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>textprefix="$o"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="textemboss" type="Bool"/>
+    <xs:attribute name="textfont" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Font short name or a file:// URL.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>textfont="Oswald"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="overflow" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Let text overflow the control.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>overflow="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="textfilter" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Obsolete: the engine asserts when it is true.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="bgcolor" type="Color"/>
+    <xs:attribute name="bgcolorfocus" type="Color"/>
+    <xs:attribute name="focusareacolor1" type="Color">
+      <xs:annotation>
+        <xs:documentation>Background of the focus area.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>focusareacolor1="06C"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="focusareacolor2" type="Color">
+      <xs:annotation>
+        <xs:documentation>Background of the focus area when focused.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>focusareacolor2="09F"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="bgborderx" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>bgborderx="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="bgbordery" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>bgbordery="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+
+  <xs:attributeGroup name="QuadAttributes">
+    <xs:attribute name="image" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Image or video URL.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>image="https://example.com/image.png"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="imageid" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Dictionary key of the image URL.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>imageid="logo"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="imagefocus" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Image URL when focused.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>imagefocus="https://example.com/image-focus.png"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="imagefocusid" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Dictionary key of the focused image URL.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>imagefocusid="logo_focus"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="type" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Media type hint for the image URL.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>type="png"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="colorize" type="Color">
+      <xs:annotation>
+        <xs:documentation>Colorize the image. Takes precedence over modulatecolor.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>colorize="09F"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="modulatecolor" type="Color">
+      <xs:annotation>
+        <xs:documentation>Multiply the image by this color.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>modulatecolor="09F"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="keepratio" type="KeepRatio">
+      <xs:annotation>
+        <xs:documentation>Inactive, Clip or Fit (any case). Default Inactive.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>keepratio="Fit"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="blend" type="Blend">
+      <xs:annotation>
+        <xs:documentation>Default or Add (any case).</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>blend="Add"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="autoscale" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Default true.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>autoscale="0"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="autoscalefixedwidth" type="Bool"/>
+    <xs:attribute name="styleselected" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Show the selected state of the style.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>styleselected="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="bluramount" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>bluramount="0.5"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="pincorners" type="PinCorners">
+      <xs:annotation>
+        <xs:documentation>Four x,y pairs, each in angle brackets, separated by colons.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+
+  <xs:attributeGroup name="StylesheetAttributes">
+    <xs:attribute name="id" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Space-separated control ids this style applies to.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>id="play_button quit_button"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="class" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Space-separated control classes this style applies to.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>class="title"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="pos" type="PartialVec2"/>
+    <xs:attribute name="posn" type="PartialVec3"/>
+    <xs:attribute name="z-index" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>z-index="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="rot" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>rot="45"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="scale" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>scale="0.8"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attributeGroup ref="PlacementAttributes"/>
+    <xs:attributeGroup ref="StyleAttributes"/>
+    <xs:attribute name="opacity" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>opacity="0.5"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="textsize" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>textsize="2"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="textprefix" type="xs:string">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>textprefix="$o"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="textfont" type="xs:string">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>textfont="Oswald"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="textemboss" type="Bool"/>
+    <!-- Unlike the same attributes on controls, these colors are hex only. -->
+    <xs:attribute name="textcolor" type="HexColor"/>
+    <xs:attribute name="bgcolor" type="HexColor"/>
+    <xs:attribute name="bgcolorfocus" type="HexColor"/>
+    <xs:attribute name="focusareacolor1" type="HexColor"/>
+    <xs:attribute name="focusareacolor2" type="HexColor"/>
+    <xs:attribute name="color" type="HexColor">
+      <xs:annotation>
+        <xs:documentation>Gauge color.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>color="09F"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="grading" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>grading="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="centered" type="Bool"/>
+    <xs:attribute name="drawbg" type="Bool"/>
+    <xs:attribute name="drawblockbg" type="Bool"/>
+    <xs:attribute name="image" type="xs:string">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>image="https://example.com/image.png"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="imagefocus" type="xs:string">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>imagefocus="https://example.com/image-focus.png"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="colorize" type="Color"/>
+    <xs:attribute name="modulatecolor" type="Color"/>
+    <xs:attribute name="keepratio" type="KeepRatio">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>keepratio="Fit"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="autoscale" type="Bool"/>
+    <xs:attribute name="autoscalefixedwidth" type="Bool"/>
+    <xs:attribute name="styleselected" type="Bool"/>
+    <xs:attribute name="autonewline" type="Bool"/>
+    <xs:attribute name="maxline" type="xs:int">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>maxline="3"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="linespacing" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>linespacing="1.2"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="submitonenter" type="Bool"/>
+    <xs:attribute name="showlinenumbers" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Parsed, but textedit reads autonewline in its place (engine bug).</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>showlinenumbers="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="format" type="TextFormat">
+      <xs:annotation>
+        <xs:documentation>Stylesheet name of the textformat attribute.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>format="Password"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+
+  <xs:attributeGroup name="TableFormatAttributes">
+    <xs:attribute name="textcolor" type="HexColor"/>
+    <xs:attribute name="textsize" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>textsize="2"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="textfilter" type="xs:int"/>
+    <xs:attribute name="bgcolor" type="HexColor"/>
+    <xs:attribute name="focusareacolor1" type="HexColor"/>
+    <xs:attribute name="focusareacolor2" type="HexColor"/>
+    <xs:attribute name="bgborderx" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>bgborderx="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="bgbordery" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>bgbordery="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+
+  <xs:attributeGroup name="TableImageAttributes">
+    <xs:attribute name="image" type="xs:string">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>image="https://example.com/image.png"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="imageid" type="xs:string">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>imageid="logo"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="imagefocus" type="xs:string">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>imagefocus="https://example.com/image-focus.png"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="imagefocusid" type="xs:string">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>imagefocusid="logo_focus"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="type" type="xs:string">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>type="png"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+
+  <xs:attributeGroup name="TableSizeAttributes">
+    <xs:attributeGroup ref="PlacementAttributes"/>
+    <xs:attribute name="width" type="xs:float">
+      <xs:annotation>
+        <xs:documentation>Width. Overridden by size and sizen, except as a cell's column width.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>width="40"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="height" type="xs:float">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>height="8"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+
+  <xs:attributeGroup name="TableLinkAttributes">
+    <xs:attribute name="action" type="xs:string">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>action="vote'yes"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="actionkey" type="xs:int">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>actionkey="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="url" type="xs:string">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>url="https://example.com/"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="urlid" type="xs:string">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>urlid="website"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="manialink" type="xs:string">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>manialink="https://example.com/page.xml"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="manialinkid" type="xs:string">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>manialinkid="next_page"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="maniazone" type="xs:string">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>maniazone="example"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+
+  <!-- ============================================================ Value types -->
+  <!--
+    Case-insensitive values are a union of an enumeration, which gives editors completion,
+    and a pattern, which accepts the other casings.
+  -->
+
+  <xs:simpleType name="Bool">
+    <xs:annotation>
+      <xs:documentation>1, true, yes, t, y or 0, false, no, f, n, in any case. An empty value keeps the default. Anything else reads as false.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>1</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="1"/>
+          <xs:enumeration value="0"/>
+          <xs:enumeration value="true"/>
+          <xs:enumeration value="false"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:pattern value="([Tt][Rr][Uu][Ee]|[Ff][Aa][Ll][Ss][Ee]|[Yy][Ee][Ss]|[Nn][Oo]|[TtFfYyNn])?"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+
+  <xs:simpleType name="StrictBool">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="true|false|[+\-]?[0-9]+"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PresenceFlag">
+    <xs:annotation>
+      <xs:documentation>Only presence matters. Values that look like "off" are rejected because they would still switch the feature on.</xs:documentation>
+    </xs:annotation>
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="1"/>
+          <xs:enumeration value="true"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:pattern value="([Tt][Rr][Uu][Ee]|[Yy][Ee][Ss]|[TtYy])?"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+
+  <xs:simpleType name="EmptyString">
+    <xs:restriction base="xs:string">
+      <xs:maxLength value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="FloatList">
+    <xs:list itemType="xs:float"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="Vec2">
+    <xs:annotation>
+      <xs:documentation>Two numbers separated by spaces.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>10 20</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="FloatList">
+      <xs:length value="2"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="Vec3">
+    <xs:annotation>
+      <xs:documentation>Three numbers separated by spaces.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>1 0.5 0</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="FloatList">
+      <xs:length value="3"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="Vec4">
+    <xs:annotation>
+      <xs:documentation>Four numbers separated by spaces.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="FloatList">
+      <xs:length value="4"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PartialVec2">
+    <xs:annotation>
+      <xs:documentation>One or two numbers separated by spaces. A missing number keeps its default.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>10 -20</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="FloatList">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="2"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PartialVec3">
+    <xs:annotation>
+      <xs:documentation>One to three numbers separated by spaces. A missing number is 0.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>10 -20 1</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="FloatList">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="3"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="HexColor">
+    <xs:annotation>
+      <xs:documentation>RGB, RGBA, RRGGBB or RRGGBBAA, without '#'.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>F80</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="([0-9A-Fa-f]{3,4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})?"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="Color">
+    <xs:annotation>
+      <xs:documentation>Hex without '#', or 3 or 4 space-separated numbers in the range 0 to 1 (red green blue [alpha]).</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>F80</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:union memberTypes="HexColor Vec3 Vec4"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="ClassName">
+    <xs:restriction base="xs:token">
+      <xs:pattern value="[A-Za-z0-9_.\-]+"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ClassList">
+    <xs:list itemType="ClassName"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="Version">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="0"/>
+      <xs:enumeration value="1"/>
+      <xs:enumeration value="2"/>
+      <xs:enumeration value="3"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PageTimeout">
+    <xs:restriction base="xs:unsignedInt"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="ResourceType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[Dd][Ee][Ff][Aa][Uu][Ll][Tt]"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="Style3dName">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="2"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="HAlign">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="left"/>
+      <xs:enumeration value="center"/>
+      <xs:enumeration value="right"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="VAlign">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="top"/>
+      <xs:enumeration value="center"/>
+      <xs:enumeration value="center2"/>
+      <xs:enumeration value="bottom"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="TextFormat">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Basic"/>
+      <xs:enumeration value="Script"/>
+      <xs:enumeration value="Password"/>
+      <xs:enumeration value="Newpassword"/>
+      <xs:enumeration value=""/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PlayerStatus">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Playing"/>
+      <xs:enumeration value="Spectating"/>
+      <xs:enumeration value="PlayingAndAlive"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="Blend">
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="Default"/>
+          <xs:enumeration value="Add"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:pattern value="([Dd][Ee][Ff][Aa][Uu][Ll][Tt]|[Aa][Dd][Dd])?"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+
+  <xs:simpleType name="KeepRatio">
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="Inactive"/>
+          <xs:enumeration value="Clip"/>
+          <xs:enumeration value="Fit"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:pattern value="([Ii][Nn][Aa][Cc][Tt][Ii][Vv][Ee]|[Cc][Ll][Ii][Pp]|[Ff][Ii][Tt])?"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+
+  <xs:simpleType name="Background">
+    <xs:union memberTypes="BackgroundName Bool"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="BackgroundName">
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="default_image"/>
+          <xs:enumeration value="hide"/>
+          <xs:enumeration value="stars"/>
+          <xs:enumeration value="stations"/>
+          <xs:enumeration value="title"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:pattern value="[Dd][Ee][Ff][Aa][Uu][Ll][Tt]_[Ii][Mm][Aa][Gg][Ee]|[Hh][Ii][Dd][Ee]|[Ss][Tt][Aa][Rr][Ss]|[Ss][Tt][Aa][Tt][Ii][Oo][Nn][Ss]|[Tt][Ii][Tt][Ll][Ee]"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+
+  <xs:simpleType name="Layer">
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="Normal"/>
+          <xs:enumeration value="ScoresTable"/>
+          <xs:enumeration value="AltMenu"/>
+          <xs:enumeration value="ScreenIn3d"/>
+          <xs:enumeration value="CutScene"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:pattern value="([Nn][Oo][Rr][Mm][Aa][Ll]|[Ss][Cc][Oo][Rr][Ee][Ss][Tt][Aa][Bb][Ll][Ee]|[Aa][Ll][Tt][Mm][Ee][Nn][Uu]|[Ss][Cc][Rr][Ee][Ee][Nn][Ii][Nn]3[Dd]|[Cc][Uu][Tt][Ss][Cc][Ee][Nn][Ee])?"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+
+  <xs:simpleType name="FileType">
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="map"/>
+          <xs:enumeration value="challenge"/>
+          <xs:enumeration value="replay"/>
+          <xs:enumeration value="skin"/>
+          <xs:enumeration value="image"/>
+          <xs:enumeration value="audio"/>
+          <xs:enumeration value="video"/>
+          <xs:enumeration value="text"/>
+          <xs:enumeration value="zip"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:pattern value="([Mm][Aa][Pp]|[Cc][Hh][Aa][Ll][Ll][Ee][Nn][Gg][Ee]|[Rr][Ee][Pp][Ll][Aa][Yy]|[Ss][Kk][Ii][Nn]|[Ii][Mm][Aa][Gg][Ee]|[Aa][Uu][Dd][Ii][Oo]|[Vv][Ii][Dd][Ee][Oo]|[Tt][Ee][Xx][Tt]|[Zz][Ii][Pp])?"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+
+  <xs:simpleType name="PinCorners">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="(&lt;\s*[+\-]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][+\-]?[0-9]+)?,\s*[+\-]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][+\-]?[0-9]+)?&gt;:){3}&lt;\s*[+\-]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][+\-]?[0-9]+)?,\s*[+\-]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][+\-]?[0-9]+)?&gt;"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

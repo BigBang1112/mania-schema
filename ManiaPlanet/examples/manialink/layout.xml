@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  A stylesheet, a reusable template and translations.
+  A framemodel must appear before the frameinstance elements that use it.
+  Colors in a stylesheet are hex only, unlike the same attributes on controls.
+-->
+<manialink version="3"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="../../manialink.xsd">
+  <stylesheet>
+    <style class="heading" textsize="4" textcolor="FFF" halign="center" valign="center2"/>
+    <style class="card" size="70 24" bgcolor="102030E0" halign="center" valign="center"/>
+  </stylesheet>
+
+  <dico>
+    <language id="en">
+      <title>Choose a server</title>
+      <free_slots>Free slots</free_slots>
+    </language>
+    <language id="de">
+      <title>Server auswählen</title>
+      <free_slots>Freie Plätze</free_slots>
+    </language>
+  </dico>
+
+  <framemodel id="server-card">
+    <quad class="card"/>
+    <label class="heading" pos="0 4" z-index="1" size="64 8" textid="free_slots"/>
+    <gauge pos="0 -6" z-index="1" size="60 6" halign="center" valign="center"
+           ratio="0.25" color="09F"/>
+  </framemodel>
+
+  <label class="heading" pos="0 40" size="160 10" textid="title"/>
+  <frameinstance modelid="server-card" pos="-40 10"/>
+  <frameinstance modelid="server-card" pos="40 10"/>
+</manialink>
