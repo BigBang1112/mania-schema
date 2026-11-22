@@ -39,7 +39,9 @@
     * type, timeout and custom_ui modules are expected once. The first one is used.
     * Style and substyle names live in the game's data files, so they are not listed.
     * Dictionary entries may have any name, so their names are not checked.
-    * .NET's validator ignores one final line break when it checks type, so it misses that error.
+    * .NET's validator ignores one final line break when it checks a pattern, so it misses that
+      error in values of these types: Color, Bool, PageType, FileEntryType and FileEntryFolder.
+      In attributes that takes a &#10;.
 
   Sources in the binary (image base 00400000):
     Page, tables         00721000  CGameManialink::BuildPage
@@ -113,7 +115,12 @@
     </xs:annotation>
   </xs:element>
 
-  <!-- These are also global so that a file pulled in by include can be validated on its own. -->
+  <!--
+    These are also global so that a file pulled in by include can be validated on its own.
+    type and timeout are not: they are read before includes are expanded.
+    An entry, fileentry, audio or video root is checked as in a frame, which takes every attribute
+    of the table version. Dictionary entries have any name, so they cannot be checked alone.
+  -->
 
   <xs:element name="dico" type="Dico">
     <xs:annotation>
@@ -181,24 +188,70 @@ At the root: affects the tables after it. Frame controls start from the page's f
     </xs:annotation>
   </xs:element>
 
+  <xs:element name="entry" type="Entry">
+    <xs:annotation>
+      <xs:documentation>Text input. Links refer to its value by name.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;entry posn="0 0 1" sizen="30 4" name="search"/></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="fileentry" type="FileEntry">
+    <xs:annotation>
+      <xs:documentation>File chooser. Upload it with url="post(address,name)".</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;fileentry posn="0 0 1" sizen="30 4" name="replay" type="replay"/></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="audio" type="Media">
+    <xs:annotation>
+      <xs:documentation>Audio player.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;audio posn="0 0 1" sizen="6 6" data="http://example.com/sound.ogg" play="1"/></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="video" type="Media">
+    <xs:annotation>
+      <xs:documentation>Video player.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;video posn="0 0 1" sizen="40 30" data="http://example.com/video.bik" play="1"/></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="music" type="Music">
+    <xs:annotation>
+      <xs:documentation>Browser only. Looping background music. The last one wins.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;music data="http://example.com/music.ogg"/></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="background" type="Background">
+    <xs:annotation>
+      <xs:documentation>Background of the table grid. It ignores the page format. Its text, if any, is read as an image URL.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;background bgcolor="000A"/></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="text" type="TableText">
+    <xs:annotation>
+      <xs:documentation>Text as wide as the cell. It has no position or size of its own. It wraps when the cell has a width.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;text>Player&lt;/text></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="icon" type="TableIcon">
+    <xs:annotation>
+      <xs:documentation>A quad in a table. Default size 0.1 by 0.1. It follows the page format, not the cell's.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;icon sizen="6 6" image="http://example.com/icon.dds"/></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
   <!-- ============================================================ Page -->
 
   <xs:complexType name="ManialinkContent" mixed="true">
     <xs:choice minOccurs="0" maxOccurs="unbounded">
       <xs:group ref="FrameChild"/>
       <xs:element ref="dico"/>
-      <xs:element name="background" type="Background">
-        <xs:annotation>
-          <xs:documentation>Background of the table grid. It ignores the page format. Its text, if any, is read as an image URL.</xs:documentation>
-          <xs:documentation><![CDATA[Example:<pre>&lt;background bgcolor="000A"/></pre>]]></xs:documentation>
-        </xs:annotation>
-      </xs:element>
-      <xs:element name="music" type="Music">
-        <xs:annotation>
-          <xs:documentation>Browser only. Looping background music. The last one wins.</xs:documentation>
-          <xs:documentation><![CDATA[Example:<pre>&lt;music data="http://example.com/music.ogg"/></pre>]]></xs:documentation>
-        </xs:annotation>
-      </xs:element>
+      <xs:element ref="background"/>
+      <xs:element ref="music"/>
       <xs:element ref="line"/>
       <xs:element name="type" type="PageType">
         <xs:annotation>
@@ -355,31 +408,11 @@ Engine bug: the current time is not added, so the page counts as fresh until the
       <xs:element ref="frame"/>
       <xs:element ref="format"/>
       <xs:element ref="label"/>
-      <xs:element name="entry" type="Entry">
-        <xs:annotation>
-          <xs:documentation>Text input. Links refer to its value by name.</xs:documentation>
-          <xs:documentation><![CDATA[Example:<pre>&lt;entry posn="0 0 1" sizen="30 4" name="search"/></pre>]]></xs:documentation>
-        </xs:annotation>
-      </xs:element>
-      <xs:element name="fileentry" type="FileEntry">
-        <xs:annotation>
-          <xs:documentation>File chooser. Upload it with url="post(address,name)".</xs:documentation>
-          <xs:documentation><![CDATA[Example:<pre>&lt;fileentry posn="0 0 1" sizen="30 4" name="replay" type="replay"/></pre>]]></xs:documentation>
-        </xs:annotation>
-      </xs:element>
+      <xs:element ref="entry"/>
+      <xs:element ref="fileentry"/>
       <xs:element ref="quad"/>
-      <xs:element name="audio" type="Media">
-        <xs:annotation>
-          <xs:documentation>Audio player.</xs:documentation>
-          <xs:documentation><![CDATA[Example:<pre>&lt;audio posn="0 0 1" sizen="6 6" data="http://example.com/sound.ogg" play="1"/></pre>]]></xs:documentation>
-        </xs:annotation>
-      </xs:element>
-      <xs:element name="video" type="Media">
-        <xs:annotation>
-          <xs:documentation>Video player.</xs:documentation>
-          <xs:documentation><![CDATA[Example:<pre>&lt;video posn="0 0 1" sizen="40 30" data="http://example.com/video.bik" play="1"/></pre>]]></xs:documentation>
-        </xs:annotation>
-      </xs:element>
+      <xs:element ref="audio"/>
+      <xs:element ref="video"/>
       <xs:element ref="include"/>
     </xs:choice>
   </xs:group>
@@ -498,12 +531,7 @@ Engine bug: the current time is not added, so the page counts as fresh until the
 
   <xs:complexType name="Cell" mixed="true">
     <xs:choice minOccurs="0" maxOccurs="unbounded">
-      <xs:element name="text" type="TableText">
-        <xs:annotation>
-          <xs:documentation>Text as wide as the cell. It has no position or size of its own. It wraps when the cell has a width.</xs:documentation>
-          <xs:documentation><![CDATA[Example:<pre>&lt;text>Player&lt;/text></pre>]]></xs:documentation>
-        </xs:annotation>
-      </xs:element>
+      <xs:element ref="text"/>
       <xs:element name="entry" type="TableEntry">
         <xs:annotation>
           <xs:documentation>Text input as wide as the cell.</xs:documentation>
@@ -516,12 +544,7 @@ Engine bug: the current time is not added, so the page counts as fresh until the
           <xs:documentation><![CDATA[Example:<pre>&lt;fileentry name="replay" type="replay"/></pre>]]></xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="icon" type="TableIcon">
-        <xs:annotation>
-          <xs:documentation>A quad in a table. Default size 0.1 by 0.1. It follows the page format, not the cell's.</xs:documentation>
-          <xs:documentation><![CDATA[Example:<pre>&lt;icon sizen="6 6" image="http://example.com/icon.dds"/></pre>]]></xs:documentation>
-        </xs:annotation>
-      </xs:element>
+      <xs:element ref="icon"/>
       <xs:element name="audio" type="TableMedia">
         <xs:annotation>
           <xs:documentation><![CDATA[Example:<pre>&lt;audio sizen="6 6" data="http://example.com/sound.ogg" play="1"/></pre>]]></xs:documentation>

@@ -649,10 +649,10 @@
 
   <xs:simpleType name="IpAddress">
     <xs:annotation>
-      <xs:documentation>a.b.c.d or a.b.c.d:port.</xs:documentation>
+      <xs:documentation>a.b.c.d or a.b.c.d:port. Leading zeros are allowed and the numbers are still decimal.</xs:documentation>
     </xs:annotation>
     <xs:restriction base="xs:string">
-      <xs:pattern value="\s*((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(:(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[0-9]{1,4}))?\s*"/>
+      <xs:pattern value="\s*((0*(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]?)|0+)\.){3}(0*(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]?)|0+)(:(0*(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{0,3})|0+))?\s*"/>
     </xs:restriction>
   </xs:simpleType>
 
@@ -696,64 +696,78 @@
     </xs:restriction>
   </xs:simpleType>
 
-  <!-- Patterns of a derived type apply in addition to those of FileName. -->
+  <!-- Patterns of a derived type apply in addition to those of its base types. -->
+
+  <!--
+    The game resolves ".." before it checks the folder, also when tabs, line breaks or DEL (which it
+    removes) are between the dots. XSD cannot resolve paths, so every ".." segment is reported,
+    including the few that would stay inside the folder.
+  -->
+  <xs:simpleType name="ContainedFileName">
+    <xs:annotation>
+      <xs:documentation>A FileName without ".." segments.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="FileName">
+      <xs:pattern value="[\t\n\r&#127;]*([^./\\\t\n\r&#127;][^/\\]*|\.[\t\n\r&#127;]*([^./\\\t\n\r&#127;][^/\\]*|\.[\t\n\r&#127;]*[^/\\\t\n\r&#127;][^/\\]*)?)?([/\\][\t\n\r&#127;]*([^./\\\t\n\r&#127;][^/\\]*|\.[\t\n\r&#127;]*([^./\\\t\n\r&#127;][^/\\]*|\.[\t\n\r&#127;]*[^/\\\t\n\r&#127;][^/\\]*)?)?)*"/>
+    </xs:restriction>
+  </xs:simpleType>
 
   <xs:simpleType name="SkinFile">
     <xs:annotation>
-      <xs:documentation>Skins/... with any allowed extension. Skins/Vehicles/ is redirected to Skins/Models/.</xs:documentation>
+      <xs:documentation>Skins/... with any allowed extension. No ".." segments. Skins/Vehicles/ is redirected to Skins/Models/.</xs:documentation>
       <xs:documentation><![CDATA[Example: <code>Skins/Models/CanyonCar/Example.zip</code>]]></xs:documentation>
     </xs:annotation>
-    <xs:restriction base="FileName">
+    <xs:restriction base="ContainedFileName">
       <xs:pattern value="[\t\n\r]*(\.[/\\])?[Ss][Kk][Ii][Nn][Ss][/\\][\s\S]+"/>
     </xs:restriction>
   </xs:simpleType>
 
   <xs:simpleType name="PackFile">
     <xs:annotation>
-      <xs:documentation>Packs/... ending in .Pack.Gbx (any case). The parser also tests for .pak, but the built-in extension list rejects that first.</xs:documentation>
+      <xs:documentation>Packs/... ending in .Pack.Gbx (any case). No ".." segments. The parser also tests for .pak, but the built-in extension list rejects that first.</xs:documentation>
       <xs:documentation><![CDATA[Example: <code>Packs/Example.Title.Pack.Gbx</code>]]></xs:documentation>
     </xs:annotation>
-    <xs:restriction base="FileName">
+    <xs:restriction base="ContainedFileName">
       <xs:pattern value="[\t\n\r]*(\.[/\\])?[Pp][Aa][Cc][Kk][Ss][/\\][\s\S]*\.[Pp][Aa][Cc][Kk]\.[Gg][Bb][Xx][\t\n\r]*"/>
     </xs:restriction>
   </xs:simpleType>
 
   <xs:simpleType name="ItemFile">
     <xs:annotation>
-      <xs:documentation>Items/... ending in .Item.Gbx (any case).</xs:documentation>
+      <xs:documentation>Items/... ending in .Item.Gbx (any case). No ".." segments.</xs:documentation>
       <xs:documentation><![CDATA[Example: <code>Items/Example.Item.Gbx</code>]]></xs:documentation>
     </xs:annotation>
-    <xs:restriction base="FileName">
+    <xs:restriction base="ContainedFileName">
       <xs:pattern value="[\t\n\r]*(\.[/\\])?[Ii][Tt][Ee][Mm][Ss][/\\][\s\S]*\.[Ii][Tt][Ee][Mm]\.[Gg][Bb][Xx][\t\n\r]*"/>
     </xs:restriction>
   </xs:simpleType>
 
   <xs:simpleType name="BlockFile">
     <xs:annotation>
-      <xs:documentation>Blocks/... ending in .Block.Gbx (any case).</xs:documentation>
+      <xs:documentation>Blocks/... ending in .Block.Gbx (any case). No ".." segments.</xs:documentation>
       <xs:documentation><![CDATA[Example: <code>Blocks/Example.Block.Gbx</code>]]></xs:documentation>
     </xs:annotation>
-    <xs:restriction base="FileName">
+    <xs:restriction base="ContainedFileName">
       <xs:pattern value="[\t\n\r]*(\.[/\\])?[Bb][Ll][Oo][Cc][Kk][Ss][/\\][\s\S]*\.[Bb][Ll][Oo][Cc][Kk]\.[Gg][Bb][Xx][\t\n\r]*"/>
     </xs:restriction>
   </xs:simpleType>
 
   <xs:simpleType name="MacroblockFile">
     <xs:annotation>
-      <xs:documentation>Blocks/... ending in .Macroblock.Gbx (any case).</xs:documentation>
+      <xs:documentation>Blocks/... ending in .Macroblock.Gbx (any case). No ".." segments.</xs:documentation>
       <xs:documentation><![CDATA[Example: <code>Blocks/Example.Macroblock.Gbx</code>]]></xs:documentation>
     </xs:annotation>
-    <xs:restriction base="FileName">
+    <xs:restriction base="ContainedFileName">
       <xs:pattern value="[\t\n\r]*(\.[/\\])?[Bb][Ll][Oo][Cc][Kk][Ss][/\\][\s\S]*\.[Mm][Aa][Cc][Rr][Oo][Bb][Ll][Oo][Cc][Kk]\.[Gg][Bb][Xx][\t\n\r]*"/>
     </xs:restriction>
   </xs:simpleType>
 
   <xs:simpleType name="ScriptFile">
     <xs:annotation>
-      <xs:documentation>Scripts/... ending in .Script.txt (any case).</xs:documentation>
+      <xs:documentation>Scripts/... ending in .Script.txt (any case). No ".." segments.</xs:documentation>
       <xs:documentation><![CDATA[Example: <code>Scripts/Example.Script.txt</code>]]></xs:documentation>
     </xs:annotation>
-    <xs:restriction base="FileName">
+    <xs:restriction base="ContainedFileName">
       <xs:pattern value="[\t\n\r]*(\.[/\\])?[Ss][Cc][Rr][Ii][Pp][Tt][Ss][/\\][\s\S]*\.[Ss][Cc][Rr][Ii][Pp][Tt]\.[Tt][Xx][Tt][\t\n\r]*"/>
     </xs:restriction>
   </xs:simpleType>
