@@ -363,6 +363,13 @@
     </xs:annotation>
   </xs:element>
 
+  <xs:element name="key" type="SkyGradientKey">
+    <xs:annotation>
+      <xs:documentation>A sky-gradient key. The engine reads at most four keys after includes are expanded.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;key x="0.5" color="9CF"/></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
   <!-- ============================================================ Content models -->
 
   <xs:group name="FrameContent">
@@ -1518,12 +1525,13 @@
 
   <xs:complexType name="SkyGradient">
     <xs:sequence>
-      <!-- The engine stops after the fourth key. -->
-      <xs:element name="key" type="SkyGradientKey" minOccurs="0" maxOccurs="4">
-        <xs:annotation>
-          <xs:documentation><![CDATA[Example:<pre>&lt;key x="0.5" color="9CF"/></pre>]]></xs:documentation>
-        </xs:annotation>
-      </xs:element>
+      <!-- The engine stops after the fourth key. This limit counts explicit keys only;
+           XSD 1.0 cannot count the keys inserted by includes. -->
+      <xs:element ref="include" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:sequence minOccurs="0" maxOccurs="4">
+        <xs:element ref="key"/>
+        <xs:element ref="include" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
     </xs:sequence>
     <xs:attribute name="scale" type="Float">
       <xs:annotation>

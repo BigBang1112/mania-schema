@@ -1019,18 +1019,20 @@ Engine bug: it is not decoded as UTF-8, so non-ASCII characters are garbled unle
 
   <xs:simpleType name="Int">
     <xs:annotation>
-      <xs:documentation>An integer. Anything after the digits would be dropped by the engine.</xs:documentation>
+      <xs:documentation>An integer from -2147483648 to 2147483647. Anything after the digits would be dropped by the engine.</xs:documentation>
     </xs:annotation>
-    <xs:restriction base="xs:string">
+    <xs:restriction base="xs:int">
       <xs:pattern value="\s*[+\-]?[0-9]+\s*"/>
     </xs:restriction>
   </xs:simpleType>
 
   <xs:simpleType name="UInt">
     <xs:annotation>
-      <xs:documentation>An integer of 0 or more. The engine reads negative values as huge ones.</xs:documentation>
+      <xs:documentation>An integer from 0 to 4294967295. The engine reads negative values as huge ones.</xs:documentation>
     </xs:annotation>
-    <xs:restriction base="xs:string">
+    <xs:restriction base="xs:integer">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="4294967295"/>
       <xs:pattern value="\s*\+?[0-9]+\s*"/>
     </xs:restriction>
   </xs:simpleType>
