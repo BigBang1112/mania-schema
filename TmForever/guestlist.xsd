@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  TmForever guest list XML schema (XSD 1.0, no target namespace)
+
+  Derived by static analysis of TmForever.exe (TrackMania Nations/United Forever)
+    version       2.11.26 (string in the binary, no version resource), x86
+    file date     2011-01-28
+    SHA-256       3847CF9F20BFC63914450060ED528C12104F743D96AD23D6E76ABD178DE8C84F
+
+  Covers the guest list of a server: players who may join it. The default file name is
+  guestlist.txt. It is loaded and saved by the LoadGuestList and SaveGuestList XML-RPC methods.
+
+  Use:
+    <guestlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:noNamespaceSchemaLocation="guestlist.xsd">
+
+  How the engine handles a document:
+    * Loading replaces the whole guest list. If the file cannot be read as XML, the list is
+      unchanged and an error is returned.
+    * If the root is not <guestlist>, loading succeeds with an empty list.
+    * Element names are case-sensitive.
+    * Children of guestlist other than player, and children of player other than login, are
+      silently ignored. So is a player without login. This schema reports them.
+    * If a player has several login elements, the first is used.
+    * A login is compared without regard to case. One already in the list is skipped.
+    * Saving an empty list writes the format as a comment instead.
+
+  Sources in the binary (image base 00400000):
+    Load                 0061b730  CGameNetwork::LoadGuestList
+    Parse                005b9a70  CGameNetwork::ParseGuestListXmlDocument
+    Add                  005b9a30  CGameNetwork::AddGuestListedPlayer
+    Compare              005b1f10  CGameNetwork::IsGuestListed
+    Save                 005b5520  CGameNetwork::BuildGuestListXmlFile
+    Text                 0091f810  CXmlEngine::ReadAssociatedText
+
+  Examples in xs:documentation:
+    They are HTML for the tooltips of XML language servers, which collapse whitespace.
+    Keep each on one line, with &#10; for a line break, &#32; for indentation and &lt; for "<".
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+  <xs:element name="guestlist" type="GuestList">
+    <xs:annotation>
+      <xs:documentation>Players who may join the server.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;guestlist>&#10;&#32;&#32;&lt;player>&#10;&#32;&#32;&#32;&#32;&lt;login>example_player&lt;/login>&#10;&#32;&#32;&lt;/player>&#10;&lt;/guestlist></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:complexType name="GuestList">
+    <xs:sequence>
+      <xs:element name="player" type="Player" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;player>&#10;&#32;&#32;&lt;login>example_player&lt;/login>&#10;&lt;/player></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Player">
+    <xs:sequence>
+      <xs:element name="login" type="Login">
+        <xs:annotation>
+          <xs:documentation>Login of the player.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;login>example_player&lt;/login></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:simpleType name="Login">
+    <xs:annotation>
+      <xs:documentation>Used exactly as written, except for case: surrounding whitespace makes it a different login. Empty text, or text that is only whitespace, is ignored.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>example_player</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\S([\s\S]*\S)?"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

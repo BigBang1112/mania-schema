@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  A guest list in the layout the game saves. Load it with the LoadGuestList XML-RPC method.
+-->
+<guestlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="../../guestlist.xsd">
+	<player>
+		<login>example_player</login>
+	</player>
+	<player>
+		<login>another_player</login>
+	</player>
+</guestlist>
