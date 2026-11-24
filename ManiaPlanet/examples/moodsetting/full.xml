@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  A .MoodSetting.xml file with every element the game reads, in the order the game writes them.
+-->
+<Mood xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="../../moodsetting.xsd">
+  <Light EnableStars="0" Latitude="45" DayTime01="0.5" LocalLightX="1" HelperHdrX="1">
+    <LAmbient Color="8AA8D0" Scale="0.6"/>
+    <LDirSun Color="FFF0D8" Scale="2.5"/>
+    <LDirMoon Color="000000" Scale="1"/>
+    <T3SpecularLocal ScaleIntens="1" ScaleExponent="1"/>
+    <T3LightMap MaxHDR="4" BounceFactor="1" SkyFactor="1" SkyUseClouds="1"/>
+  </Light>
+  <Atmo MoonHdrScale="1" FxSmSelfIllumScaleGamePlay="1" FogUseLighting="1">
+    <HdrSun Power="1">
+      <Atmo1 Power="8" Color="FFD8A0" Scale="1"/>
+      <Atmo2 Power="64" Color="FFFFFF" Scale="0.5"/>
+    </HdrSun>
+    <Clouds MinRgb="606878" MinRgbX="0.8" MaxRgb="FFFFFF" MaxRgbX="1.2" GodLightIntens="0.5" SunThroughIntens="0.3">
+      <EdgeLight>
+        <Layer0 Power="4" Scale="1"/>
+        <Layer1 Power="16" Scale="0.5"/>
+        <Layer2 Power="64" Scale="0.25"/>
+      </EdgeLight>
+      <LDirFront Back_Dot="-1" Back_Intens="0.2" Front_Dot="1" Front_Intens="1"/>
+      <LDirBack Back_Dot="-1" Back_Intens="0.6" Front_Dot="1" Front_Intens="0.4"/>
+    </Clouds>
+    <CloudsX2 MinRgb="808080" MinRgbX="0.5" MaxRgb="FFFFFF" MaxRgbX="1"/>
+    <CloudsVortex MinRgb="404040" MaxRgb="FFFFFF"/>
+    <FogMatter Count="2">
+      <Matter0 Id="Mist" Density="0.5" Color="B0C0D0" Diffuse="C0D0E0FF"/>
+      <Matter1 Id="Smoke" Density="0.2" Color="505050" Diffuse="404040C0"/>
+    </FogMatter>
+  </Atmo>
+  <Fog Enabled="1" DepthMin="0" DepthMax="2000" Exponant="1" IntensMin="0" IntensMax="0.7" Color="A0B4C8">
+    <Height YBottom="0" YTop="200" MulBottom="1" MulTop="0"/>
+    <Clouds DepthMax="90000" Exponant="2" IntensMax="0.8"/>
+    <SkyClouds GlobalIntens="1"/>
+    <WaterFog Version="1" CausticIntens="6" CausticSize="8" CausticPeriodMs="2000"/>
+    <Noise Speed="5 5 5" Size="256"/>
+  </Fog>
+  <Fx>
+    <T3Bloom StreaksIntens="0.3" StreaksAttenuation="0.9">
+      <HdrNorm_to_Intens>
+        <Key In="0" Out="0"/>
+        <Key In="1" Out="0.5"/>
+      </HdrNorm_to_Intens>
+    </T3Bloom>
+    <T3ToneMap FilmCurve="Preset1">
+      <AutoExp MinExposure="-2" MaxExposure="2" SecondsToMidFalloff="1">
+        <AvgLumi_to_KeyValue>
+          <Key In="0" Out="0.18"/>
+          <Key In="1" Out="0.12"/>
+        </AvgLumi_to_KeyValue>
+      </AutoExp>
+    </T3ToneMap>
+    <ColorGrading FileName="ColorGrading/Warm.dds" Intensity="1"/>
+  </Fx>
+</Mood>

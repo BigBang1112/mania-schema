@@ -1,0 +1,870 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ManiaPlanet MoodSetting XML schema (XSD 1.0, no target namespace)
+
+  Derived by static analysis of ManiaPlanetLogs.exe
+    file version  2019.11.19.1842
+    SHA-256       6AC97A32F75F7BD4242D15DEA986409FFD9809565A3FA8C32FF1068D193DD555
+
+  Covers files with the .MoodSetting.xml extension (class CPlugMoodSetting): the lighting,
+  sky, fog and post-processing of one mood. See moodblender.xsd for .MoodBlender.xml.
+
+  Use:
+    <Mood xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="moodsetting.xsd">
+
+  How the engine handles a document:
+    * The name of the root element is not checked. The game writes <Mood>, and this schema
+      accepts only that.
+    * Element and attribute names are case-sensitive. Child elements may be in any order. If one
+      is repeated, the first is used.
+    * Unknown elements, attributes and text are silently ignored. This schema reports them.
+    * A missing required element or attribute, or a value that cannot be read, is logged as a
+      data error. The value keeps its default and loading continues.
+    * Numbers outside their range are clamped without any error. This schema reports them.
+    * Unrecognized boolean text reads as false without any error. This schema reports it.
+    * Some attributes are read only to convert older files. They are marked "Legacy".
+
+  Sources in the binary (image base 140000000):
+    File type            141707650  CPlugEngine::Init (".MoodSetting.xml", class 090FE000)
+    Document             1403dd900  XmlToMoodSetting (file)
+                         1403dda60  XmlToMoodSetting (element)
+    Import               1403dd800  CPlugMoodSetting::Import
+    Light                1404847a0  SPlugMoodLight::XmlArchive
+    Atmo                 1404370b0  SPlugMoodAtmo::XmlArchive
+    Clouds light dirs    140436dc0  Archive_CloudsSprites_LDir
+    Fog                  1415645e0  SGxFog::XmlToFog
+    Fx                   140440450  SPlugMoodFx::XmlArchive
+    Curves               1401f3120  CFuncKeysReal::XmlArchive
+    Children             1406dea20  CSystemXmlTools::ElementDoChildElem
+    Error reporting      1406e13e0  SysXmlLogError
+    Values               1406debd0 (bool), 1406df110 (real), 1406df040 (natural),
+                         1406df360 (RGB), 1406df1f0 (RGBA), 1406de600 (RGB + scale),
+                         1406dece0 (enum), 1406dee60 (id), 1406df670 (vec3)
+    Value parsers        14033cc60 (bool), 14033cf20 (color), 14016d360 (reals)
+
+  Examples in xs:documentation:
+    They are HTML for the tooltips of XML language servers, which collapse whitespace.
+    Keep each on one line, with &#10; for a line break, &#32; for indentation and &lt; for "<".
+    An annotation on a declaration hides the one on its type. If a declaration has no text of
+    its own, put the example on the type instead.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+  <!-- ============================================================ Document element -->
+
+  <xs:element name="Mood" type="Mood">
+    <xs:annotation>
+      <xs:documentation>The settings of one mood: lighting, atmosphere, fog and post-processing. All four sections are required.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;Mood>&#10;&#32;&#32;&lt;Light .../>&#10;&#32;&#32;&lt;Atmo .../>&#10;&#32;&#32;&lt;Fog .../>&#10;&#32;&#32;&lt;Fx/>&#10;&lt;/Mood></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:complexType name="Mood">
+    <xs:all>
+      <xs:element name="Light" type="Light">
+        <xs:annotation>
+          <xs:documentation>Sun, moon, ambient and lightmap lighting.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Atmo" type="Atmo">
+        <xs:annotation>
+          <xs:documentation>Sky, clouds and fog matters.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Fog" type="Fog">
+        <xs:annotation>
+          <xs:documentation>Distance, height, cloud, water and noise fog.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Fx" type="Fx">
+        <xs:annotation>
+          <xs:documentation>Post-processing: bloom, tone mapping and color grading. Each child is optional, so it may be empty.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <!-- ============================================================ Light -->
+
+  <xs:complexType name="Light">
+    <xs:all>
+      <xs:element name="LAmbient" type="ColorScale">
+        <xs:annotation>
+          <xs:documentation>Ambient light.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;LAmbient Color="8AA8D0" Scale="0.6"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="LDirSun" type="ColorScale">
+        <xs:annotation>
+          <xs:documentation>Directional light of the sun.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;LDirSun Color="FFF0D8" Scale="2.5"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="LDirMoon" type="ColorScale">
+        <xs:annotation>
+          <xs:documentation>Directional light of the moon.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;LDirMoon Color="000000" Scale="1"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="T3SpecularLocal" type="T3SpecularLocal" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Scales the specular highlights of local lights.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;T3SpecularLocal ScaleIntens="1" ScaleExponent="1"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="T3LightMap" type="T3LightMap">
+        <xs:annotation>
+          <xs:documentation>Lightmap computation. The game omits it when saving a mood whose MaxHDR is 0, but it is reported as missing when loading.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;T3LightMap MaxHDR="4" BounceFactor="1" SkyFactor="1" SkyUseClouds="1"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+    <xs:attribute name="EnableStars" type="Bool" use="required">
+      <xs:annotation>
+        <xs:documentation>Shows stars in the sky.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>EnableStars="0"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="Latitude" use="required">
+      <xs:annotation>
+        <xs:documentation>Latitude of the place, from -180 to 180.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>Latitude="45"</code>]]></xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="Float">
+          <xs:minInclusive value="-180"/>
+          <xs:maxInclusive value="180"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="DayTime01" type="Fraction" use="required">
+      <xs:annotation>
+        <xs:documentation>Time of day, from 0 to 1. 0.5 is noon.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>DayTime01="0.5"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="LocalLightX" type="NonNegativeFloat" use="required">
+      <xs:annotation>
+        <xs:documentation>Intensity multiplier of local lights.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>LocalLightX="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="HelperHdrX" type="NonNegativeFloat" use="required">
+      <xs:annotation>
+        <xs:documentation>HDR intensity multiplier of helper lights.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>HelperHdrX="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="SunMoonX" type="NonNegativeFloat">
+      <xs:annotation>
+        <xs:documentation>Legacy. When present, the LAmbient, LDirSun and LDirMoon attributes are read and replace the colors of the child elements. The ambient scale becomes 1. Of sun and moon, the dimmer is switched off and the brighter gets SunMoonX as its scale.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="LAmbient" type="RgbColor">
+      <xs:annotation>
+        <xs:documentation>Legacy ambient color. Read only with SunMoonX.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="LDirSun" type="RgbColor">
+      <xs:annotation>
+        <xs:documentation>Legacy sun color. Read only with SunMoonX.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="LDirMoon" type="RgbColor">
+      <xs:annotation>
+        <xs:documentation>Legacy moon color. Read only with SunMoonX.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="ColorScale">
+    <xs:attribute name="Color" type="RgbColor" use="required">
+      <xs:annotation>
+        <xs:documentation>Color of the light.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="Scale" type="NonNegativeFloat" use="required">
+      <xs:annotation>
+        <xs:documentation>Intensity that multiplies Color.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="T3SpecularLocal">
+    <xs:attribute name="ScaleIntens" type="NonNegativeFloat" use="required"/>
+    <xs:attribute name="ScaleExponent" type="NonNegativeFloat" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="T3LightMap">
+    <xs:attribute name="MaxHDR" type="NonNegativeFloat" use="required">
+      <xs:annotation>
+        <xs:documentation>Highest intensity stored in the lightmap.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="BounceFactor" type="NonNegativeFloat" use="required">
+      <xs:annotation>
+        <xs:documentation>Multiplier of bounced light.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="SkyFactor" type="NonNegativeFloat" use="required">
+      <xs:annotation>
+        <xs:documentation>Multiplier of sky light.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="SkyUseClouds" type="Bool" use="required">
+      <xs:annotation>
+        <xs:documentation>Whether clouds affect sky light.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <!-- ============================================================ Atmo -->
+
+  <xs:complexType name="Atmo">
+    <xs:all>
+      <xs:element name="HdrSun" type="HdrSun">
+        <xs:annotation>
+          <xs:documentation>Sun glow in the sky.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Clouds" type="AtmoClouds">
+        <xs:annotation>
+          <xs:documentation>Cloud colors and lighting.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="CloudsX2" type="MinMaxColorScale">
+        <xs:annotation>
+          <xs:documentation>Colors of the second cloud layer.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;CloudsX2 MinRgb="808080" MinRgbX="0.5" MaxRgb="FFFFFF" MaxRgbX="1"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="CloudsVortex" type="MinMaxColor">
+        <xs:annotation>
+          <xs:documentation>Colors of cloud vortices.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;CloudsVortex MinRgb="404040" MaxRgb="FFFFFF"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="FogMatter" type="FogMatter">
+        <xs:annotation>
+          <xs:documentation>Up to 3 fog matters.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+    <xs:attribute name="MoonHdrScale" type="Float" use="required">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>MoonHdrScale="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="FxSmSelfIllumScaleGamePlay" type="Float" use="required">
+      <xs:annotation>
+        <xs:documentation>Scale of self-illumination on gameplay elements.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>FxSmSelfIllumScaleGamePlay="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="FogUseLighting" type="Bool" use="required">
+      <xs:annotation>
+        <xs:documentation>Whether the fog is lit by the sun and moon.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>FogUseLighting="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="HdrSun">
+    <xs:all>
+      <xs:element name="Atmo1" type="HdrSunLayer"/>
+      <xs:element name="Atmo2" type="HdrSunLayer"/>
+    </xs:all>
+    <xs:attribute name="Power" type="Float" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="HdrSunLayer">
+    <xs:annotation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;Atmo1 Power="8" Color="FFD8A0" Scale="1"/></pre>]]></xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="Power" type="Float" use="required"/>
+    <xs:attribute name="Color" type="RgbColor" use="required"/>
+    <xs:attribute name="Scale" type="NonNegativeFloat" use="required">
+      <xs:annotation>
+        <xs:documentation>Intensity that multiplies Color.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="AtmoClouds">
+    <!--
+      EdgeLight, plus either LightDir or both LDirFront and LDirBack, in any order.
+      When LightDir is present, LDirFront and LDirBack are not read.
+    -->
+    <xs:choice>
+      <xs:sequence>
+        <xs:group ref="CloudsEdgeLight"/>
+        <xs:choice>
+          <xs:group ref="CloudsLightDir"/>
+          <xs:sequence>
+            <xs:group ref="CloudsLDirFront"/>
+            <xs:group ref="CloudsLDirBack"/>
+          </xs:sequence>
+          <xs:sequence>
+            <xs:group ref="CloudsLDirBack"/>
+            <xs:group ref="CloudsLDirFront"/>
+          </xs:sequence>
+        </xs:choice>
+      </xs:sequence>
+      <xs:sequence>
+        <xs:group ref="CloudsLightDir"/>
+        <xs:group ref="CloudsEdgeLight"/>
+      </xs:sequence>
+      <xs:sequence>
+        <xs:group ref="CloudsLDirFront"/>
+        <xs:choice>
+          <xs:sequence>
+            <xs:group ref="CloudsEdgeLight"/>
+            <xs:group ref="CloudsLDirBack"/>
+          </xs:sequence>
+          <xs:sequence>
+            <xs:group ref="CloudsLDirBack"/>
+            <xs:group ref="CloudsEdgeLight"/>
+          </xs:sequence>
+        </xs:choice>
+      </xs:sequence>
+      <xs:sequence>
+        <xs:group ref="CloudsLDirBack"/>
+        <xs:choice>
+          <xs:sequence>
+            <xs:group ref="CloudsEdgeLight"/>
+            <xs:group ref="CloudsLDirFront"/>
+          </xs:sequence>
+          <xs:sequence>
+            <xs:group ref="CloudsLDirFront"/>
+            <xs:group ref="CloudsEdgeLight"/>
+          </xs:sequence>
+        </xs:choice>
+      </xs:sequence>
+    </xs:choice>
+    <xs:attributeGroup ref="MinMaxColorScale"/>
+    <xs:attribute name="GodLightIntens" type="NonNegativeFloat" use="required">
+      <xs:annotation>
+        <xs:documentation>Intensity of light shafts through the clouds.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="SunThroughIntens" type="NonNegativeFloat" use="required">
+      <xs:annotation>
+        <xs:documentation>Intensity of sunlight seen through the clouds.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:group name="CloudsEdgeLight">
+    <xs:sequence>
+      <xs:element name="EdgeLight" type="EdgeLight">
+        <xs:annotation>
+          <xs:documentation>Light on cloud edges, in up to 3 layers.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;EdgeLight>&#10;&#32;&#32;&lt;Layer0 Power="4" Scale="1"/>&#10;&lt;/EdgeLight></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+
+  <xs:group name="CloudsLightDir">
+    <xs:sequence>
+      <xs:element name="LightDir" type="CloudsLightDir">
+        <xs:annotation>
+          <xs:documentation>Legacy. Used for both LDirFront and LDirBack, which are then not read.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+
+  <xs:group name="CloudsLDirFront">
+    <xs:sequence>
+      <xs:element name="LDirFront" type="CloudsLightDir">
+        <xs:annotation>
+          <xs:documentation>Directional lighting of the clouds in front of the sun.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+
+  <xs:group name="CloudsLDirBack">
+    <xs:sequence>
+      <xs:element name="LDirBack" type="CloudsLightDir">
+        <xs:annotation>
+          <xs:documentation>Directional lighting of the clouds behind the sun.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+
+  <xs:complexType name="EdgeLight">
+    <xs:all>
+      <xs:element name="Layer0" type="EdgeLightLayer" minOccurs="0"/>
+      <xs:element name="Layer1" type="EdgeLightLayer" minOccurs="0"/>
+      <xs:element name="Layer2" type="EdgeLightLayer" minOccurs="0"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="EdgeLightLayer">
+    <xs:attribute name="Power" type="Float" use="required"/>
+    <xs:attribute name="Scale" type="NonNegativeFloat" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="CloudsLightDir">
+    <xs:annotation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;LDirFront Back_Dot="-1" Back_Intens="0.2" Front_Dot="1" Front_Intens="1"/></pre>]]></xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="Back_Dot" type="SignedFraction" use="required"/>
+    <xs:attribute name="Back_Intens" type="Fraction" use="required"/>
+    <xs:attribute name="Front_Dot" type="SignedFraction" use="required"/>
+    <xs:attribute name="Front_Intens" type="Fraction" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="MinMaxColorScale">
+    <xs:attributeGroup ref="MinMaxColorScale"/>
+  </xs:complexType>
+
+  <xs:attributeGroup name="MinMaxColorScale">
+    <xs:attribute name="MinRgb" type="RgbColor" use="required"/>
+    <xs:attribute name="MinRgbX" type="NonNegativeFloat" use="required">
+      <xs:annotation>
+        <xs:documentation>Intensity that multiplies MinRgb.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="MaxRgb" type="RgbColor" use="required"/>
+    <xs:attribute name="MaxRgbX" type="NonNegativeFloat" use="required">
+      <xs:annotation>
+        <xs:documentation>Intensity that multiplies MaxRgb.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+
+  <xs:complexType name="MinMaxColor">
+    <xs:attribute name="MinRgb" type="RgbColor" use="required"/>
+    <xs:attribute name="MaxRgb" type="RgbColor" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="FogMatter">
+    <xs:annotation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;FogMatter Count="1">&#10;&#32;&#32;&lt;Matter0 Id="Mist" Density="0.5" Color="336680" Diffuse="4080A0FF"/>&#10;&lt;/FogMatter></pre>]]></xs:documentation>
+    </xs:annotation>
+    <xs:all>
+      <xs:element name="Matter0" type="Matter" minOccurs="0"/>
+      <xs:element name="Matter1" type="Matter" minOccurs="0"/>
+      <xs:element name="Matter2" type="Matter" minOccurs="0"/>
+    </xs:all>
+    <xs:attribute name="Count" use="required">
+      <xs:annotation>
+        <xs:documentation>Number of fog matters, from 0 to 3. Only Matter0 to Matter(Count-1) are read. XSD 1.0 cannot check that they match.</xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:unsignedInt">
+          <xs:maxInclusive value="3"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="Matter">
+    <xs:attribute name="Id" type="Id" use="required">
+      <xs:annotation>
+        <xs:documentation>Name of the fog matter.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="Density" type="Fraction" use="required"/>
+    <xs:attribute name="Color" type="RgbColor" use="required"/>
+    <xs:attribute name="Diffuse" type="RgbaColor" use="required">
+      <xs:annotation>
+        <xs:documentation>Diffuse color with alpha. An unreadable value is fully transparent black.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <!-- ============================================================ Fog -->
+
+  <xs:complexType name="Fog">
+    <xs:all>
+      <xs:element name="Height" type="FogHeight" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Changes the fog density with altitude.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;Height YBottom="0" YTop="200" MulBottom="1" MulTop="0"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Clouds" type="FogClouds" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Fog applied to the clouds.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;Clouds DepthMax="90000" Exponant="2" IntensMax="0.8"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="SkyClouds" type="SkyClouds" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;SkyClouds GlobalIntens="1"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="WaterFog" type="WaterFog" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Underwater fog and caustics.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;WaterFog Version="1" CausticIntens="6" CausticSize="8" CausticPeriodMs="2000"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Noise" type="FogNoise" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Animated noise in the fog.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;Noise Speed="5 5 5" Size="256"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+    <xs:attribute name="Enabled" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Default: true.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>Enabled="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="DepthMin" type="NonNegativeFloat" use="required">
+      <xs:annotation>
+        <xs:documentation>Distance where the fog starts.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>DepthMin="0"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="DepthMax" type="NonNegativeFloat" use="required">
+      <xs:annotation>
+        <xs:documentation>Distance where the fog reaches IntensMax. If it is not greater than DepthMin, the game replaces it.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>DepthMax="2000"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="Exponant" type="Float">
+      <xs:annotation>
+        <xs:documentation>Shape of the fog curve between DepthMin and DepthMax. Default: 1.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>Exponant="1"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="IntensMin" type="Fraction" use="required">
+      <xs:annotation>
+        <xs:documentation>Fog intensity at DepthMin.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>IntensMin="0"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="IntensMax" type="Fraction" use="required">
+      <xs:annotation>
+        <xs:documentation>Fog intensity at DepthMax. If it is not greater than IntensMin, the game replaces it.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>IntensMax="0.7"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="Color" type="RgbColor">
+      <xs:annotation>
+        <xs:documentation>Fog color. Optional.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>Color="A0B4C8"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="FogHeight">
+    <xs:attribute name="YBottom" type="Float">
+      <xs:annotation>
+        <xs:documentation>Altitude where MulBottom applies. Default: 0.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="YTop" type="Float">
+      <xs:annotation>
+        <xs:documentation>Altitude where MulTop applies. If it is not greater than YBottom, the game replaces it. Default: 1000.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="MulBottom" type="Fraction" use="required">
+      <xs:annotation>
+        <xs:documentation>Fog multiplier at YBottom.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="MulTop" type="Fraction" use="required">
+      <xs:annotation>
+        <xs:documentation>Fog multiplier at YTop.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="FogClouds">
+    <xs:attribute name="DepthMax" type="NonNegativeFloat" use="required"/>
+    <xs:attribute name="Exponant" type="Float">
+      <xs:annotation>
+        <xs:documentation>Default: 2.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="IntensMax" type="Fraction" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="SkyClouds">
+    <xs:attribute name="GlobalIntens" type="Fraction" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="WaterFog">
+    <xs:attribute name="Version" use="required">
+      <xs:simpleType>
+        <xs:restriction base="xs:unsignedInt">
+          <xs:maxInclusive value="1"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="CausticIntens" type="NonNegativeFloat" use="required"/>
+    <xs:attribute name="CausticSize" type="NonNegativeFloat" use="required"/>
+    <xs:attribute name="CausticPeriodMs" use="required">
+      <xs:annotation>
+        <xs:documentation>Period of the caustics animation, in milliseconds. At least 1.</xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:int">
+          <xs:minInclusive value="1"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="FogNoise">
+    <xs:attribute name="Speed" type="Vec3" use="required"/>
+    <xs:attribute name="Size" use="required">
+      <xs:annotation>
+        <xs:documentation>At least 0.000001.</xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="Float">
+          <xs:minInclusive value="0.000001"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+  </xs:complexType>
+
+  <!-- ============================================================ Fx -->
+
+  <xs:complexType name="Fx">
+    <xs:all>
+      <xs:element name="T3Bloom" type="T3Bloom" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Bloom and streaks around bright areas.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="T3ToneMap" type="T3ToneMap" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Tone mapping and auto-exposure.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="ColorGrading" type="ColorGrading" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Color grading from a look-up image. Without it, color grading is off.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="T3Bloom">
+    <xs:annotation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;T3Bloom StreaksIntens="0.3" StreaksAttenuation="0.9">&#10;&#32;&#32;&lt;HdrNorm_to_Intens>&#10;&#32;&#32;&#32;&#32;&lt;Key In="0" Out="0"/>&#10;&#32;&#32;&#32;&#32;&lt;Key In="1" Out="0.5"/>&#10;&#32;&#32;&lt;/HdrNorm_to_Intens>&#10;&lt;/T3Bloom></pre>]]></xs:documentation>
+    </xs:annotation>
+    <xs:all>
+      <xs:element name="HdrNorm_to_Intens" type="Curve">
+        <xs:annotation>
+          <xs:documentation>Bloom intensity as a function of normalized HDR brightness.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+    <xs:attribute name="StreaksIntens" type="NonNegativeFloat" use="required"/>
+    <xs:attribute name="StreaksAttenuation" type="NonNegativeFloat" use="required"/>
+    <xs:attribute name="BloomIntens" type="NonNegativeFloat">
+      <xs:annotation>
+        <xs:documentation>Legacy. StreaksIntens is divided by it, with values below 0.1 read as 0.1.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="T3ToneMap">
+    <xs:annotation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;T3ToneMap FilmCurve="Preset1">&#10;&#32;&#32;&lt;AutoExp MinExposure="-2" MaxExposure="2" SecondsToMidFalloff="1">&#10;&#32;&#32;&#32;&#32;&lt;AvgLumi_to_KeyValue>&#10;&#32;&#32;&#32;&#32;&#32;&#32;&lt;Key In="0" Out="0.18"/>&#10;&#32;&#32;&#32;&#32;&lt;/AvgLumi_to_KeyValue>&#10;&#32;&#32;&lt;/AutoExp>&#10;&lt;/T3ToneMap></pre>]]></xs:documentation>
+    </xs:annotation>
+    <xs:all>
+      <xs:element name="AutoExp" type="AutoExp" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Automatic exposure.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+    <xs:attribute name="FilmCurve" type="FilmCurve" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="AutoExp">
+    <xs:all>
+      <xs:element name="AvgLumi_to_KeyValue" type="Curve">
+        <xs:annotation>
+          <xs:documentation>Target key value as a function of the average luminance.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+    <xs:attribute name="MinExposure" type="Float" use="required"/>
+    <xs:attribute name="MaxExposure" type="Float" use="required"/>
+    <xs:attribute name="SecondsToMidFalloff" type="NonNegativeFloat" use="required">
+      <xs:annotation>
+        <xs:documentation>Adaptation speed, in seconds.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="Curve">
+    <xs:annotation>
+      <xs:documentation>A curve given by keys. Only Key children are read.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="Key" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;Key In="1" Out="0.5"/></pre>]]></xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:attribute name="In" type="Float" use="required"/>
+          <xs:attribute name="Out" type="NonNegativeFloat" use="required"/>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ColorGrading">
+    <xs:annotation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;ColorGrading FileName="ColorGrading/Warm.dds" Intensity="1"/></pre>]]></xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="FileName" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>Path of the look-up image, resolved like the other files this mood depends on. An empty value turns color grading off.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="Intensity" type="Fraction" use="required"/>
+  </xs:complexType>
+
+  <!-- ============================================================ Value types -->
+  <!--
+    Case-insensitive values are a union of an enumeration, which gives editors completion,
+    and a pattern, which accepts the other casings.
+  -->
+
+  <xs:simpleType name="Bool">
+    <xs:annotation>
+      <xs:documentation>1, true, yes, t, y or 0, false, no, f, n, in any case. An empty value is an error. Anything else reads as false.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>1</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="1"/>
+          <xs:enumeration value="0"/>
+          <xs:enumeration value="true"/>
+          <xs:enumeration value="false"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:pattern value="[Tt][Rr][Uu][Ee]|[Ff][Aa][Ll][Ss][Ee]|[Yy][Ee][Ss]|[Nn][Oo]|[TtFfYyNn]"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+
+  <xs:simpleType name="Float">
+    <xs:annotation>
+      <xs:documentation>A finite number. INF, NaN and numbers too large for a 32-bit float are invalid.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:float">
+      <!-- The pattern is for NaN, which validators do not compare consistently with the bounds. -->
+      <xs:pattern value="[0-9eE.+\-]+"/>
+      <xs:minInclusive value="-3.4028235E38"/>
+      <xs:maxInclusive value="3.4028235E38"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="NonNegativeFloat">
+    <xs:annotation>
+      <xs:documentation>A number of at least 0. Negative values are read as 0.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="Float">
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="Fraction">
+    <xs:annotation>
+      <xs:documentation>A number from 0 to 1. Values outside are clamped.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="Float">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="SignedFraction">
+    <xs:annotation>
+      <xs:documentation>A number from -1 to 1. Values outside are clamped.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="Float">
+      <xs:minInclusive value="-1"/>
+      <xs:maxInclusive value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="FloatList">
+    <xs:list itemType="Float"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="Vec3">
+    <xs:annotation>
+      <xs:documentation>Three numbers separated by spaces.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>5 5 5</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="FloatList">
+      <xs:length value="3"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="RgbColor">
+    <xs:annotation>
+      <xs:documentation>RGB or RRGGBB in hex, without '#', in sRGB. The game converts it to linear. An empty value is black. The game also accepts an alpha digit or pair, but ignores it, so this schema rejects it.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>FFE0C0</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})?"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="RgbaColor">
+    <xs:annotation>
+      <xs:documentation>RGB, RGBA, RRGGBB or RRGGBBAA in hex, without '#'. A missing alpha is opaque. An empty value is opaque black.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>4080A0FF</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="([0-9A-Fa-f]{3,4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})?"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="Id">
+    <xs:annotation>
+      <xs:documentation>A name. It must not be empty, "Unassigned" or "NullId".</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="FilmCurve">
+    <xs:annotation>
+      <xs:documentation>Disable, Preset1, Preset2, Preset3 or Preset4, in any case. Disable is read as Preset1.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>Preset1</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="Disable"/>
+          <xs:enumeration value="Preset1"/>
+          <xs:enumeration value="Preset2"/>
+          <xs:enumeration value="Preset3"/>
+          <xs:enumeration value="Preset4"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:pattern value="[Dd][Ii][Ss][Aa][Bb][Ll][Ee]|[Pp][Rr][Ee][Ss][Ee][Tt][1-4]"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+
+</xs:schema>

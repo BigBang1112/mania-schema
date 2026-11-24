@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ManiaPlanet MoodBlender XML schema (XSD 1.0, no target namespace)
+
+  Derived by static analysis of ManiaPlanetLogs.exe
+    file version  2019.11.19.1842
+    SHA-256       6AC97A32F75F7BD4242D15DEA986409FFD9809565A3FA8C32FF1068D193DD555
+
+  Covers files with the .MoodBlender.xml extension (class CPlugMoodBlender): how moods are
+  blended over the day. The moods themselves are .MoodSetting.xml files, see moodsetting.xsd.
+
+  Use:
+    <MoodBlender xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:noNamespaceSchemaLocation="moodblender.xsd">
+
+  How the engine handles a document:
+    * The name of the root element is not checked. The game writes <MoodBlender>, and this
+      schema accepts only that.
+    * Element and attribute names are case-sensitive. If an element is repeated, the first is
+      used, except Key, which is read every time.
+    * Unknown elements, attributes and text are silently ignored. This schema reports them.
+    * A missing required element or attribute, or a value that cannot be read, is logged as a
+      data error. The value keeps its default and loading continues.
+    * Numbers outside their range are clamped without any error. This schema reports them.
+
+  Sources in the binary (image base 140000000):
+    File type            141707650  CPlugEngine::Init (".MoodBlender.xml", class 0911A000)
+    Document             1404418a0  XmlToMoodBlender (file)
+                         140441a00  XmlToMoodBlender (element)
+    MoodWeights          140441330  SPlugMoodCurve::XmlArchive
+    Key                  140441050  SPlugMoodCurve_XmlArchiveKey
+    Times of day         1404417d0  Time01_ArchiveXml
+                         1404365f0  NPlugMood::FromString_Seconds
+                         140436d70  NPlugMood::ToString_Seconds
+    Values               1406df110 (real), 14016d360 (reals)
+
+  Examples in xs:documentation:
+    They are HTML for the tooltips of XML language servers, which collapse whitespace.
+    Keep each on one line, with &#10; for a line break, &#32; for indentation and &lt; for "<".
+    An annotation on a declaration hides the one on its type. If a declaration has no text of
+    its own, put the example on the type instead.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+  <!-- ============================================================ Document element -->
+
+  <xs:element name="MoodBlender" type="MoodBlender">
+    <xs:annotation>
+      <xs:documentation>How moods are blended over the day.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;MoodBlender Latitude="45" SunRise="06:00:00" SunFall="20:00:00">&#10;&#32;&#32;&lt;MoodWeights>&#10;&#32;&#32;&#32;&#32;&lt;Key X="0" Weight="0"/>&#10;&#32;&#32;&#32;&#32;&lt;Key X="0.5" Weight="1"/>&#10;&#32;&#32;&lt;/MoodWeights>&#10;&lt;/MoodBlender></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:complexType name="MoodBlender">
+    <xs:all>
+      <xs:element name="MoodWeights" type="MoodWeights">
+        <xs:annotation>
+          <xs:documentation>Weight curve over the day. Only Key children are read.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+    <xs:attribute name="Latitude" type="Float" use="required">
+      <xs:annotation>
+        <xs:documentation><![CDATA[Example: <code>Latitude="45"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="SunRise" type="TimeOfDay">
+      <xs:annotation>
+        <xs:documentation>Time of sunrise.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>SunRise="06:00:00"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="LocalLight_SwitchOff" type="TimeOfDay">
+      <xs:annotation>
+        <xs:documentation>Time when local lights switch off.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>LocalLight_SwitchOff="07:00:00"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="LocalLight_SwitchOn" type="TimeOfDay">
+      <xs:annotation>
+        <xs:documentation>Time when local lights switch on.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>LocalLight_SwitchOn="19:00:00"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="SunFall" type="TimeOfDay">
+      <xs:annotation>
+        <xs:documentation>Time of sunset.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>SunFall="20:00:00"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="MoodWeights">
+    <xs:sequence>
+      <xs:element name="Key" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;Key X="0.5" Weight="1"/></pre>]]></xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:attribute name="X" type="Fraction" use="required">
+            <xs:annotation>
+              <xs:documentation>Position of the key, from 0 to 1.</xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="Weight" type="Fraction" use="required"/>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- ============================================================ Value types -->
+
+  <xs:simpleType name="Float">
+    <xs:annotation>
+      <xs:documentation>A finite number. INF, NaN and numbers too large for a 32-bit float are invalid.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:float">
+      <!-- The pattern is for NaN, which validators do not compare consistently with the bounds. -->
+      <xs:pattern value="[0-9eE.+\-]+"/>
+      <xs:minInclusive value="-3.4028235E38"/>
+      <xs:maxInclusive value="3.4028235E38"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="Fraction">
+    <xs:annotation>
+      <xs:documentation>A number from 0 to 1. Values outside are clamped.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="Float">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="TimeOfDay">
+    <xs:annotation>
+      <xs:documentation>H, H:MM or H:MM:SS, from 0:00:00 to 23:59:59. The game writes HH:MM:SS.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>06:30:00</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="([01]?[0-9]|2[0-3])(:[0-5][0-9](:[0-5][0-9])?)?"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

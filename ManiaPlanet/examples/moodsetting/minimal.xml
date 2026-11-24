@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Only what the game requires. Anything less is logged as a data error when the mood loads.
+  Fog matters, fog layers and every post-processing effect are optional.
+-->
+<Mood xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="../../moodsetting.xsd">
+  <Light EnableStars="1" Latitude="45" DayTime01="0" LocalLightX="1" HelperHdrX="1">
+    <LAmbient Color="203048" Scale="0.3"/>
+    <LDirSun Color="000000" Scale="1"/>
+    <LDirMoon Color="A0B0FF" Scale="0.4"/>
+    <T3LightMap MaxHDR="2" BounceFactor="1" SkyFactor="1" SkyUseClouds="0"/>
+  </Light>
+  <Atmo MoonHdrScale="1" FxSmSelfIllumScaleGamePlay="1" FogUseLighting="0">
+    <HdrSun Power="1">
+      <Atmo1 Power="8" Color="C0D0FF" Scale="0.2"/>
+      <Atmo2 Power="64" Color="FFFFFF" Scale="0.1"/>
+    </HdrSun>
+    <Clouds MinRgb="101820" MinRgbX="1" MaxRgb="404860" MaxRgbX="1" GodLightIntens="0" SunThroughIntens="0">
+      <EdgeLight/>
+      <LDirFront Back_Dot="-1" Back_Intens="0" Front_Dot="1" Front_Intens="1"/>
+      <LDirBack Back_Dot="-1" Back_Intens="0" Front_Dot="1" Front_Intens="1"/>
+    </Clouds>
+    <CloudsX2 MinRgb="101820" MinRgbX="1" MaxRgb="404860" MaxRgbX="1"/>
+    <CloudsVortex MinRgb="101820" MaxRgb="404860"/>
+    <FogMatter Count="0"/>
+  </Atmo>
+  <Fog DepthMin="0" DepthMax="1500" IntensMin="0" IntensMax="0.5"/>
+  <Fx/>
+</Mood>

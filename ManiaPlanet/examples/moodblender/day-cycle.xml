@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  A .MoodBlender.xml file. The times of day are optional, Latitude and MoodWeights are required.
+-->
+<MoodBlender xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:noNamespaceSchemaLocation="../../moodblender.xsd"
+             Latitude="45"
+             SunRise="06:00:00"
+             LocalLight_SwitchOff="07:00:00"
+             LocalLight_SwitchOn="19:00:00"
+             SunFall="20:00:00">
+  <MoodWeights>
+    <Key X="0" Weight="0"/>
+    <Key X="0.25" Weight="0.5"/>
+    <Key X="0.5" Weight="1"/>
+    <Key X="0.75" Weight="0.5"/>
+  </MoodWeights>
+</MoodBlender>
