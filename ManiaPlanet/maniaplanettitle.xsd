@@ -1,0 +1,697 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ManiaPlanet title pack description XML schema (XSD 1.0, no target namespace)
+
+  Derived by static analysis of ManiaPlanetLogs.exe
+    file version  2019.11.19.1842
+    SHA-256       6AC97A32F75F7BD4242D15DEA986409FFD9809565A3FA8C32FF1068D193DD555
+
+  Covers ManiaPlanetTitle.xml (struct SGameManiaTitleFromUserPack): the description of a title
+  pack made by a player. It gives the title's name, base title, menus, game modes and campaigns,
+  and lists the files to pack into it.
+
+  Use:
+    <maniaplanet_title version="4"
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xsi:noNamespaceSchemaLocation="maniaplanettitle.xsd">
+
+  How the engine handles a document:
+    * The root must be <maniaplanet_title>. A <maniaplanetpack> root is read as an older format
+      with other element names, and logged as a legacy title pack that won't work. Any other
+      root is an "unknown xml root element" error.
+    * The version attribute selects the format of the solo section. The game writes 4, and this
+      schema covers only version 4.
+    * Element and attribute names are case-sensitive. Children may be in any order. If one is
+      repeated, the first is used, except score_context, campaign, file, folder and item, which
+      are all read. XSD 1.0 cannot limit the other children of solo to one each next to any
+      number of campaigns, so repeating them is not reported.
+    * Unknown elements, attributes and text are silently ignored. This schema reports them.
+    * A missing element or attribute, or an empty one, leaves a text or path empty. Booleans and
+      numbers keep their default.
+    * Booleans: unrecognized text, including text with surrounding whitespace, reads as false
+      without any error. This schema reports it.
+    * Numbers: whitespace anywhere is removed, then the leading integer is read and anything
+      after it is ignored. This schema accepts only an integer with surrounding whitespace.
+    * Text values are not trimmed, except id, maker and player_model.
+    * The files named by the description (modes, playlists, images, campaign maps and so on) are
+      packed automatically. The files and folders sections add other files.
+    * Saving from the game rewrites the file in place. The root is renamed to maniaplanet_title,
+      version is set to 4, and every element is written, empty paths as name="". Unknown content
+      is kept.
+
+  Sources in the binary (image base 140000000):
+    File name            14009c7a0  SGameManiaTitleFromUserPack::s_TitleDescFileName
+    Load                 1408feb90  NGameCtnDataPacks::Title_InternalParseUserPackContents
+    Document             1408fb750  SerializeGameManiaTitleFromUserPack
+    Base titles          141b7d580  (table used by the above)
+    files, folders       140e81b80  ParsePackTitleDescXml
+    Save                 1408feff0  NGameCtnDataPacks::Title_InternalWriteUserPackContents
+    Use                  14095cdc0  CGameManiaTitle::InitFromUserPack_ReadPublicMetaData
+                         1408f5ce0  NGameCtnDataPacks::PlugFilePack_GetFilesFromTitleDesc
+    Values               1408ea6c0 (text), 1408f29d0 (id), 1408edda0 (bool), 1408f2900 (integer),
+                         1408f2ac0 (natural), 1408f2030 (file), 1408f2420 (folder),
+                         1408f2b90 (url), 1408f25c0 (model), 1408f21d0 (file list)
+    Value parsers        14033cc60 (bool), 14033c880 (bool attribute), 14016c3a0 (integer),
+                         14016c520 (natural)
+
+  Examples in xs:documentation:
+    They are HTML for the tooltips of XML language servers, which collapse whitespace.
+    Keep each on one line, with &#10; for a line break, &#32; for indentation and &lt; for "<".
+    An annotation on a declaration hides the one on its type. If a declaration has no text of
+    its own, put the example on the type instead.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+  <!-- ============================================================ Document element -->
+
+  <xs:element name="maniaplanet_title" type="Title">
+    <xs:annotation>
+      <xs:documentation>Description of a title pack.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;maniaplanet_title version="4">&#10;&#32;&#32;&lt;id>MyTitle@example_player&lt;/id>&#10;&#32;&#32;&lt;name>My Title&lt;/name>&#10;&#32;&#32;&lt;base>TMCanyon&lt;/base>&#10;&#32;&#32;&lt;solo>&#10;&#32;&#32;&#32;&#32;&lt;mode name="Modes/TrackMania/TimeAttack.Script.txt"/>&#10;&#32;&#32;&lt;/solo>&#10;&lt;/maniaplanet_title></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:complexType name="Title">
+    <xs:all>
+      <xs:element name="id" type="Id" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Id of the title. Surrounding whitespace is trimmed. If it is empty, the name is used.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;id>MyTitle@example_player&lt;/id></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="name" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Display name of the title.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;name>My Title&lt;/name></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="desc" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Description of the title.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;desc>Time attack on new maps.&lt;/desc></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="url" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Web address of the title. Unlike the manialink elements, the address is the text of the element.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;url>https://example.com/&lt;/url></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="download_url" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Address the title pack can be downloaded from. The address is the text of the element.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;download_url>https://example.com/MyTitle.Title.Pack.gbx&lt;/download_url></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="title_version" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Version of the title. If it is empty, the date of the pack is used.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;title_version>1.0&lt;/title_version></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="allowed_client_title_version" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Title version that clients may have to play with this one.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="maker" type="Id" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Login of the maker. Surrounding whitespace is trimmed.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;maker>example_player&lt;/maker></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="base" type="BaseTitle" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Base title the title is built on. TMAll stands for TMCanyon, TMStadium, TMValley and TMLagoon. Any other value, including one with surrounding whitespace, reads as empty.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;base>TMCanyon&lt;/base></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="player_model" type="Model" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Model of the player: Name, Name:Collection or Name:Collection:Author. A space also separates the parts. Ignored unless base is set to a base title other than TMStadium.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;player_model>CanyonCar:Canyon&lt;/player_model></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="scriptcloud_enabled" type="Bool" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Whether the ScriptCloud is enabled. The default is false.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;scriptcloud_enabled>false&lt;/scriptcloud_enabled></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="limit_camera_fov" type="Bool" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Whether the field of view of the camera is limited. The default is false.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;limit_camera_fov>false&lt;/limit_camera_fov></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="use_hmd" type="Bool" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Whether the title uses a head-mounted display. The default is false.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;use_hmd>false&lt;/use_hmd></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="unlock_features" type="Natural" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Bit flags of features unlocked by the title. Unless the maker's login contains "nadeo", only the bits 1 and 16 are kept. The default is 0.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;unlock_features>0&lt;/unlock_features></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="gameplay_features" type="Natural" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Legacy. Read only, its bits are added to unlock_features.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="packaging" type="Packaging" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>How the title appears in the title list.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="menu" type="Menu" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Look and sound of the title's menus.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="menu_style" type="File" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Style of the menus. It is a child of maniaplanet_title, not of menu, but is read only if menu is present.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;menu_style name=""/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="solo" type="Solo" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Solo play: mode, data pack, score contexts and campaigns.</xs:documentation>
+        </xs:annotation>
+        <xs:unique name="CampaignNum">
+          <xs:selector xpath="campaign"/>
+          <xs:field xpath="@num"/>
+        </xs:unique>
+      </xs:element>
+      <xs:element name="network" type="ModeAndPlaylist" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Online play.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;network>&#10;&#32;&#32;&lt;mode name="Modes/TrackMania/TimeAttack.Script.txt"/>&#10;&#32;&#32;&lt;playlist name=""/>&#10;&lt;/network></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="splitscreen" type="ModeAndPlaylist" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Split-screen play.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;splitscreen>&#10;&#32;&#32;&lt;mode name="Modes/TrackMania/Rounds.Script.txt"/>&#10;&#32;&#32;&lt;playlist name=""/>&#10;&lt;/splitscreen></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="editor" type="Editor" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Map editor settings.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="music" type="Folder" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Folder of the in-game music. Every file in it is packed.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;music folder="Media/Musics/MyTitle/"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="mod" type="File" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Texture mod of the title.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;mod name=""/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="hud3dfont" type="File" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Font of the 3D interface.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;hud3dfont name=""/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="hud_default_module" type="File" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Default interface module.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;hud_default_module name=""/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="files" type="Files" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Other files to pack.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;files>&#10;&#32;&#32;&lt;file name="Media/Images/MyTitle/Logo.png" public="true" internal="false"/>&#10;&lt;/files></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="folders" type="Folders" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Folders whose files are all packed.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;folders>&#10;&#32;&#32;&lt;folder name="Scripts/Libs/MyTitle/"/>&#10;&lt;/folders></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+    <xs:attribute name="version" type="Version" use="required">
+      <xs:annotation>
+        <xs:documentation>Format version. The game writes 4. Version 3 and older have a different solo section and are not covered by this schema.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>version="4"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <!-- ============================================================ Sections -->
+
+  <xs:complexType name="Packaging">
+    <xs:all>
+      <xs:element name="image" type="File" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Image of the title's box.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;image name="Media/Images/MyTitle/Box.png"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="logos" type="File" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Logos of the title.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;logos name="Media/Images/MyTitle/Logos.png"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="collection" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Collection the title is grouped with.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="sortindex" type="Int" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Position of the title when titles are sorted. The default is 0.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;sortindex>0&lt;/sortindex></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="station_manialink" type="Url" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Manialink shown in the title's station.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;station_manialink url=""/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="station_noquickenter" type="Bool" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Whether quick entry into the title from its station is disabled. The default is true.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;station_noquickenter>true&lt;/station_noquickenter></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="boxcase_manialink" type="Url" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Manialink of the title's box.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;boxcase_manialink url=""/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="Menu">
+    <xs:all>
+      <xs:element name="background_img" type="File" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Background image of the menus.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;background_img name="Media/Images/MyTitle/Background.jpg"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="background_replay" type="File" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Replay played behind the menus.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;background_replay name=""/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="header" type="File" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Header image of the menus.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;header name=""/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="music" type="File" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Music of the menus.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;music name="Media/Musics/MyTitle/Menu.ogg"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="manialink" type="Url" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Manialink of the menus.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;manialink url="file://Media/Manialinks/MyTitle/Menu.xml"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="Solo">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="mode" type="File">
+        <xs:annotation>
+          <xs:documentation>Game mode script of solo play.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;mode name="Modes/TrackMania/TimeAttack.Script.txt"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="datapack" type="File">
+        <xs:annotation>
+          <xs:documentation>Data pack of solo play.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;datapack name=""/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="default_maprecord_type" type="Int">
+        <xs:annotation>
+          <xs:documentation>Default type of map records. The default is 0.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;default_maprecord_type>0&lt;/default_maprecord_type></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="score_context" type="ScoreContext">
+        <xs:annotation>
+          <xs:documentation>How scores of a campaign are recorded. A campaign refers to it by name.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;score_context>&#10;&#32;&#32;&lt;name>Main&lt;/name>&#10;&#32;&#32;&lt;maprecord_type>0&lt;/maprecord_type>&#10;&#32;&#32;&lt;medals_enabled>true&lt;/medals_enabled>&#10;&#32;&#32;&lt;compute_medals_from_maprecord>false&lt;/compute_medals_from_maprecord>&#10;&#32;&#32;&lt;author_medals_enabled>true&lt;/author_medals_enabled>&#10;&#32;&#32;&lt;skillpoints_enabled>false&lt;/skillpoints_enabled>&#10;&lt;/score_context></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="campaign" type="Campaign">
+        <xs:annotation>
+          <xs:documentation>A solo campaign.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;campaign num="0">&#10;&#32;&#32;&lt;playlist name=""/>&#10;&#32;&#32;&lt;mode name=""/>&#10;&#32;&#32;&lt;score_context>Main&lt;/score_context>&#10;&#32;&#32;&lt;official_record_enabled>false&lt;/official_record_enabled>&#10;&#32;&#32;&lt;disable_unlock_system>false&lt;/disable_unlock_system>&#10;&#32;&#32;&lt;maps folder="Maps/MyTitle/Campaign/" autoincludemaps="true"/>&#10;&lt;/campaign></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="ScoreContext">
+    <xs:all>
+      <xs:element name="name" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Name of the score context, used by the score_context of a campaign.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;name>Main&lt;/name></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="maprecord_type" type="Int" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Type of map records. The default is 0.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;maprecord_type>0&lt;/maprecord_type></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="medals_enabled" type="Bool" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Whether medals are enabled. The default is false.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;medals_enabled>true&lt;/medals_enabled></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="compute_medals_from_maprecord" type="Bool" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Whether medals are computed from map records. The default is false.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;compute_medals_from_maprecord>false&lt;/compute_medals_from_maprecord></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="author_medals_enabled" type="Bool" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Whether author medals are enabled. The default is false.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;author_medals_enabled>true&lt;/author_medals_enabled></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="skillpoints_enabled" type="Bool" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Whether skill points are enabled. The default is false.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;skillpoints_enabled>false&lt;/skillpoints_enabled></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="Campaign">
+    <xs:all>
+      <xs:element name="playlist" type="File" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Match settings of the campaign.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;playlist name=""/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="mode" type="File" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Game mode script of the campaign.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;mode name=""/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="score_context" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Name of the score_context of the campaign. Its map record and medal settings are copied to the campaign.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;score_context>Main&lt;/score_context></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="official_record_enabled" type="Bool" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Whether official records are enabled. The default is false.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;official_record_enabled>false&lt;/official_record_enabled></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="disable_unlock_system" type="Bool" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Whether the unlock system is disabled. The default is false.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;disable_unlock_system>false&lt;/disable_unlock_system></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="maps" type="Maps" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Folder of the campaign's maps.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;maps folder="Maps/MyTitle/Campaign/" autoincludemaps="true"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+    <xs:attribute name="num" type="Int">
+      <xs:annotation>
+        <xs:documentation>Number of the campaign, used in its id. Campaigns should have different numbers. The default is 0.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>num="0"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="Maps">
+    <xs:attribute name="folder" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>Path of the folder.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="autoincludemaps" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Whether the maps of the folder are packed with the campaign. The default is true.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>autoincludemaps="true"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="ModeAndPlaylist">
+    <xs:all>
+      <xs:element name="mode" type="File" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Game mode script.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;mode name="Modes/TrackMania/TimeAttack.Script.txt"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="playlist" type="File" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Match settings.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;playlist name=""/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="Editor">
+    <xs:all>
+      <xs:element name="maptype" type="File" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Map type script of new maps.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;maptype name="MapTypes/TrackMania/Race.Script.txt"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="simple_editor_map" type="File" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Map used by the simple editor.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;simple_editor_map name=""/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="internalitems" type="InternalItems" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Items available in the editor. Only item children are read.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;internalitems>&#10;&#32;&#32;&lt;item name="Items/MyTitle/Sign.Item.Gbx"/>&#10;&lt;/internalitems></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="InternalItems">
+    <xs:sequence>
+      <xs:element name="item" type="File" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>An item. One with an empty name is skipped.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;item name="Items/MyTitle/Sign.Item.Gbx"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Files">
+    <xs:sequence>
+      <xs:element name="file" type="PackEntry" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>A file to pack. One that is not found is skipped.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;file name="Media/Images/MyTitle/Logo.png" public="true" internal="false"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Folders">
+    <xs:sequence>
+      <xs:element name="folder" type="PackEntry" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>A folder whose files are all packed.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;folder name="Scripts/Libs/MyTitle/"/></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="PackEntry">
+    <xs:attribute name="name" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>Path, relative to the user data folders.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="public" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Whether the content is public. The default is false.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>public="true"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="internal" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Whether the content is internal to the title. The default is false.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>internal="false"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="forcecrypt" type="Bool">
+      <xs:annotation>
+        <xs:documentation>Whether encryption is forced. Ignored if public is true. The default is false.</xs:documentation>
+        <xs:documentation><![CDATA[Example: <code>forcecrypt="true"</code>]]></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <!-- ============================================================ References -->
+
+  <xs:complexType name="File">
+    <xs:annotation>
+      <xs:documentation>A file of the title. An empty name means none.</xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="name" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>Path of the file. Empty means none.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="Folder">
+    <xs:annotation>
+      <xs:documentation>A folder of the title. An empty folder attribute means none.</xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="folder" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>Path of the folder. Empty means none.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="Url">
+    <xs:annotation>
+      <xs:documentation>A manialink. An empty url means none.</xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="url" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>Address of the manialink. Empty means none.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <!-- ============================================================ Value types -->
+  <!--
+    Case-insensitive values are a union of an enumeration, which gives editors completion,
+    and a pattern, which accepts the other casings.
+  -->
+
+  <xs:simpleType name="Version">
+    <xs:restriction base="xs:unsignedInt">
+      <xs:enumeration value="4"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="Id">
+    <xs:annotation>
+      <xs:documentation>An id. Surrounding whitespace is trimmed.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="BaseTitle">
+    <xs:annotation>
+      <xs:documentation>Base title. Empty means none. Case-sensitive.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>TMCanyon</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="">
+        <xs:annotation>
+          <xs:documentation>None.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="SMStorm"/>
+      <xs:enumeration value="SMMeteor"/>
+      <xs:enumeration value="TMCanyon"/>
+      <xs:enumeration value="TMStadium">
+        <xs:annotation>
+          <xs:documentation>player_model is ignored with this base.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="TMValley"/>
+      <xs:enumeration value="TMLagoon"/>
+      <xs:enumeration value="TMAll">
+        <xs:annotation>
+          <xs:documentation>TMCanyon, TMStadium, TMValley and TMLagoon.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="Model">
+    <xs:annotation>
+      <xs:documentation>Name, Name:Collection or Name:Collection:Author. Empty means none.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>CanyonCar:Canyon</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="Bool">
+    <xs:annotation>
+      <xs:documentation>1, true, yes, t, y or 0, false, no, f, n, in any case and without surrounding whitespace. Empty keeps the default. Anything else reads as false.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>true</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="true"/>
+          <xs:enumeration value="false"/>
+          <xs:enumeration value="1"/>
+          <xs:enumeration value="0"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:pattern value="[Tt][Rr][Uu][Ee]|[Ff][Aa][Ll][Ss][Ee]|[Yy][Ee][Ss]|[Nn][Oo]|[TtFfYyNn]"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+
+  <xs:simpleType name="Int">
+    <xs:annotation>
+      <xs:documentation>A 32-bit integer.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:int"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="Natural">
+    <xs:annotation>
+      <xs:documentation>An integer from 0 to 4294967295.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:unsignedInt"/>
+  </xs:simpleType>
+
+</xs:schema>

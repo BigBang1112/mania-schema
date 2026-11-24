@@ -1,6 +1,6 @@
 # ManiaSchema
 
-XML schemas (XSD 1.0) for **Manialink** pages, **ManiaCode** files, **match settings** and **guest lists** in TrackMania Forever and ManiaPlanet, and for ManiaPlanet's **MoodSetting** and **MoodBlender** files. They provide autocompletion, documentation and validation, and are derived from static analysis of the game executables.
+XML schemas (XSD 1.0) for **Manialink** pages, **ManiaCode** files, **match settings** and **guest lists** in TrackMania Forever and ManiaPlanet, and for ManiaPlanet's **MoodSetting** and **MoodBlender** files and **title pack** descriptions. They provide autocompletion, documentation and validation, and are derived from static analysis of the game executables.
 
 | Format | Root element | TrackMania Forever (2.11.26) | ManiaPlanet (2019-11-19) |
 | --- | --- | --- | --- |
@@ -10,6 +10,7 @@ XML schemas (XSD 1.0) for **Manialink** pages, **ManiaCode** files, **match sett
 | Guest list | `<guestlist>` | [guestlist.xsd](TmForever/guestlist.xsd) · [example](TmForever/examples/guestlist) | [guestlist.xsd](ManiaPlanet/guestlist.xsd) · [example](ManiaPlanet/examples/guestlist) |
 | MoodSetting | `<Mood>` | - | [moodsetting.xsd](ManiaPlanet/moodsetting.xsd) · [examples](ManiaPlanet/examples/moodsetting) |
 | MoodBlender | `<MoodBlender>` | - | [moodblender.xsd](ManiaPlanet/moodblender.xsd) · [example](ManiaPlanet/examples/moodblender) |
+| Title pack (ManiaPlanetTitle.xml) | `<maniaplanet_title>` | - | [maniaplanettitle.xsd](ManiaPlanet/maniaplanettitle.xsd) · [example](ManiaPlanet/examples/maniaplanettitle) |
 
 ## Usage
 
