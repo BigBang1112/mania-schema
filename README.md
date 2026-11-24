@@ -48,6 +48,15 @@ doc.Validate(schemas, (_, e) =>
 Console.WriteLine(valid ? "Valid" : "Invalid");
 ```
 
+## Tests
+
+CI compiles every schema and validates every example against the schema named in its `xsi:noNamespaceSchemaLocation`, with both .NET and libxml2. To run them locally from the repository root:
+
+```sh
+dotnet run tests/validate.cs   # .NET 10 SDK
+sh tests/xmllint.sh            # needs xmllint (libxml2-utils)
+```
+
 ## Good to know
 
 - The schemas are stricter than the games, which silently ignore many of the mistakes reported here.
