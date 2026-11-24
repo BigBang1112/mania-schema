@@ -1,0 +1,470 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ManiaPlanet match settings XML schema (XSD 1.0, no target namespace)
+
+  Derived by static analysis of ManiaPlanetLogs.exe
+    file version  2019.11.19.1842
+    SHA-256       6AC97A32F75F7BD4242D15DEA986409FFD9809565A3FA8C32FF1068D193DD555
+
+  Covers match settings files (usually .txt): a playlist of maps with a game mode and its
+  settings. They are listed in the menus, and loaded by the dedicated server, the
+  LoadMatchSettings XML-RPC method and the ManiaScript match settings API.
+
+  Use:
+    <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:noNamespaceSchemaLocation="matchsettings.xsd">
+
+  How the engine handles a document:
+    * The root must be <playlist>. Otherwise the file is not loaded.
+    * Element and attribute names are case-sensitive. Children may be in any order.
+    * gameinfos, hotseat, filter, startindex, demo_allowed_paths and each settings section are
+      read once: if repeated, the first is used. XSD 1.0 cannot limit them to one each next to
+      any number of map elements, so repeating them is not reported.
+    * Inside gameinfos, hotseat, filter, map and challenge, a repeated child is reported.
+    * All challenge elements are read before all map elements. Mixing them changes the order.
+    * Unknown elements and attributes, and stray text, are silently ignored. This schema
+      reports them.
+    * A missing or empty value keeps its default. A number that cannot be read is 0.
+    * Numbers: whitespace anywhere is removed, then the leading integer is read and anything
+      after it is ignored. This schema accepts only an integer with surrounding whitespace.
+    * A value's text is that of the element's own text nodes. Text inside child elements is
+      ignored.
+
+  The ManiaScript match settings API uses a separate, smaller reader (s_LoadFromXml). It
+  ignores a file without gameinfos/script_name, reads only file from each map, and ignores
+  gameinfos except script_name and comment.
+
+  Sources in the binary (image base 140000000):
+    Load                 14134e810  CTrackManiaMatchSettings::LoadMatchSettingsXmlFile
+    Menus                14134e5c0  CTrackManiaMatchSettings::LoadFromXml
+    Dedicated server     14134eb20  CTrackManiaMatchSettings::LoadMatchSettingsXmlFile_ForSded
+    map, challenge       14134f4f0  ReadPlaylistFromXml
+    filter               14134ecb0  ReadFilterFromXml
+    gameinfos            14134ee50  ReadGameInfoFromXml
+    hotseat              14134f3a0  ReadHotSeatFromXml
+    Script settings      140685e30  CScriptSetting::LoadSettingsFromXml
+    ManiaScript API      140d00d40  s_LoadFromXml
+    Save                 14134f800  CTrackManiaMatchSettings::SaveMatchSettingsXmlFile
+                         1413501d0  WriteGameInfoToXml
+                         140686800  CScriptSetting::SaveSettingsToXml
+    Values               14033c790 (text), 14016c3e0 (integer), 14016c520 (natural),
+                         1406debd0 (bool), 1406df110 (real)
+    Meanings             XML-RPC method descriptions in the binary (SetGameMode, SetChatTime, ...)
+
+  Examples in xs:documentation:
+    They are HTML for the tooltips of XML language servers, which collapse whitespace.
+    Keep each on one line, with &#10; for a line break, &#32; for indentation and &lt; for "<".
+    An annotation on a declaration hides the one on its type. If a declaration has no text of
+    its own, put the example on the type instead.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+  <!-- ============================================================ Document element -->
+
+  <xs:element name="playlist" type="Playlist">
+    <xs:annotation>
+      <xs:documentation>Match settings: game mode, settings and a list of maps.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;playlist>&#10;&#32;&#32;&lt;gameinfos>&#10;&#32;&#32;&#32;&#32;&lt;game_mode>0&lt;/game_mode>&#10;&#32;&#32;&#32;&#32;&lt;script_name>TimeAttack.Script.txt&lt;/script_name>&#10;&#32;&#32;&lt;/gameinfos>&#10;&#32;&#32;&lt;map>&#10;&#32;&#32;&#32;&#32;&lt;file>My Maps\Example.Map.Gbx&lt;/file>&#10;&#32;&#32;&lt;/map>&#10;&lt;/playlist></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:complexType name="Playlist">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="gameinfos" type="GameInfos">
+        <xs:annotation>
+          <xs:documentation>Game mode and its settings.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="hotseat" type="HotSeat">
+        <xs:annotation>
+          <xs:documentation>Settings for hotseat games.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="filter" type="Filter">
+        <xs:annotation>
+          <xs:documentation>Where the match settings are offered, their order in lists, and map order.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="script_settings" type="ScriptSettings">
+        <xs:annotation>
+          <xs:documentation>Settings of the mode script. Takes precedence over mode_script_settings.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="mode_script_settings" type="ScriptSettings">
+        <xs:annotation>
+          <xs:documentation>Older name of script_settings, still the one the game writes. Read only when there is no script_settings.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="setting" type="ScriptSetting">
+        <xs:annotation>
+          <xs:documentation>A mode script setting directly in playlist. Read only when there is neither script_settings nor mode_script_settings.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="startindex" type="Natural">
+        <xs:annotation>
+          <xs:documentation>Index of the first map to play, from 0. With random_map_order it is reset to 0 in the menus.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;startindex>0&lt;/startindex></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="demo_allowed_paths" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Read only by the dedicated server. The game writes it only when it is not empty.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="map" type="PlaylistItem">
+        <xs:annotation>
+          <xs:documentation>A map. Maps are played in document order, after any challenge elements.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;map>&#10;&#32;&#32;&lt;file>My Maps\Example.Map.Gbx&lt;/file>&#10;&#32;&#32;&lt;ident>ExampleMapUid&lt;/ident>&#10;&lt;/map></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="challenge" type="PlaylistItem">
+        <xs:annotation>
+          <xs:documentation>Older name of map. All challenge elements are played before all map elements.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:choice>
+  </xs:complexType>
+
+  <!-- ============================================================ map -->
+
+  <xs:complexType name="PlaylistItem">
+    <!-- file, ident or both, in any order. Without either, the entry is skipped. -->
+    <xs:choice>
+      <xs:sequence>
+        <xs:group ref="ItemFile"/>
+        <xs:group ref="ItemIdent" minOccurs="0"/>
+      </xs:sequence>
+      <xs:sequence>
+        <xs:group ref="ItemIdent"/>
+        <xs:group ref="ItemFile" minOccurs="0"/>
+      </xs:sequence>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:group name="ItemFile">
+    <xs:sequence>
+      <xs:element name="file" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Path of the map file, with \ or /. The game writes it relative to the folder that holds maps, with \.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;file>My Maps\Example.Map.Gbx&lt;/file></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+
+  <xs:group name="ItemIdent">
+    <xs:sequence>
+      <xs:element name="ident" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>UID of the map. Empty, "Unassigned" and "NullId" mean none.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;ident>ExampleMapUid&lt;/ident></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+
+  <!-- ============================================================ gameinfos -->
+
+  <xs:complexType name="GameInfos">
+    <xs:all>
+      <xs:element name="game_mode" type="GameMode" minOccurs="0"/>
+      <xs:element name="script_name" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Mode script, for game_mode 0. Required by the ManiaScript match settings API, which ignores the file without it.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;script_name>TimeAttack.Script.txt&lt;/script_name></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="title" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Written by the game with the title pack's id. Never read.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;title>TMCanyon&lt;/title></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="chat_time" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Duration of the podium after a race, in milliseconds. 0 shows no podium.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;chat_time>10000&lt;/chat_time></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="finishtimeout" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Rounds and Laps: time left to finish after the first player, in milliseconds. 0 is the default, 1 adapts to the length of the map.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;finishtimeout>1&lt;/finishtimeout></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="allwarmupduration" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Warm-up in all modes. 0 is none. Otherwise its duration, in rounds (Rounds and Team) or in multiples of the gold medal time (other modes).</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;allwarmupduration>0&lt;/allwarmupduration></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="disablerespawn" type="IntFlag" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Non-zero prevents players from respawning.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;disablerespawn>0&lt;/disablerespawn></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="forceshowallopponents" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Non-zero overrides the players' preferences and shows all opponents.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;forceshowallopponents>0&lt;/forceshowallopponents></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="rounds_pointslimit" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Rounds: points limit. The game writes this and the other mode settings below only when game_mode is not 0.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="rounds_usenewrules" type="IntFlag" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Rounds: non-zero uses the new rules.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="rounds_forcedlaps" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Rounds: number of laps on multilap maps. 0 uses the map's own number.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="rounds_pointslimitnewrules" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Rounds: points limit with the new rules.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="team_pointslimit" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Team: points limit.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="team_maxpoints" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Team: maximum points per round.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="team_usenewrules" type="IntFlag" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Team: non-zero uses the new rules.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="team_pointslimitnewrules" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Team: points limit with the new rules.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="timeattack_limit" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Time Attack: time limit, in milliseconds.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;timeattack_limit>300000&lt;/timeattack_limit></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="timeattack_synchstartperiod" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Time Attack: synchronized start period.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="laps_nblaps" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Laps: number of laps.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="laps_timelimit" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Laps: time limit, in milliseconds.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="cup_pointslimit" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Cup: points needed for victory.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="cup_roundsperchallenge" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Cup: rounds before the next map.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="cup_nbwinners" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Cup: number of winners before the match is over.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="cup_warmupduration" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Cup: warm-up. 0 is none, otherwise its duration in rounds.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="comment" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Description of the match settings.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <!-- ============================================================ hotseat -->
+
+  <xs:complexType name="HotSeat">
+    <xs:all>
+      <xs:element name="game_mode" type="GameMode" minOccurs="0"/>
+      <xs:element name="time_limit" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Time limit, in milliseconds. Replaces timeattack_limit.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;time_limit>300000&lt;/time_limit></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="rounds_count" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Number of rounds.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="timeattack_limit" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Legacy time limit, in minutes. 0 is ignored. time_limit takes precedence.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <!-- ============================================================ filter -->
+
+  <xs:complexType name="Filter">
+    <xs:all>
+      <xs:element name="is_lan" type="IntFlag" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Non-zero offers these match settings for LAN games.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="is_internet" type="IntFlag" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Non-zero offers these match settings for internet games.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="is_solo" type="IntFlag" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Non-zero offers these match settings for solo games.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="is_hotseat" type="IntFlag" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Non-zero offers these match settings for hotseat games.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="sort_index" type="Int" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Position in lists of match settings, lowest first.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="random_map_order" type="IntFlag" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Non-zero shuffles the maps when the menus load the file, and starts at the first. The dedicated server may ignore it.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <!-- ============================================================ Script settings -->
+
+  <xs:complexType name="ScriptSettings">
+    <xs:annotation>
+      <xs:documentation>Settings of the mode script. Only setting children are read.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;mode_script_settings>&#10;&#32;&#32;&lt;setting name="S_TimeLimit" type="integer" value="300"/>&#10;&#32;&#32;&lt;setting name="S_UseScriptCallbacks" type="boolean" value="1"/>&#10;&lt;/mode_script_settings></pre>]]></xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="setting" type="ScriptSetting" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ScriptSetting">
+    <xs:annotation>
+      <xs:documentation>A setting of the mode script. A setting with an empty name, a name already used, an unknown type, or no readable value is skipped.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;setting name="S_TimeLimit" type="integer" value="300"/></pre>]]></xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="name" use="required">
+      <xs:annotation>
+        <xs:documentation>Name of the setting in the script.</xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:minLength value="1"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="type" type="SettingType" use="required">
+      <xs:annotation>
+        <xs:documentation>boolean, integer, real or text, in lowercase. Without it the game reads a null pointer, which crashes it.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="value" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>For boolean: 1, true, yes, t, y or 0, false, no, f, n, in any case. For integer: a 32-bit integer. For real: a number. For text: any text. XSD 1.0 cannot check it against type.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <!-- ============================================================ Value types -->
+
+  <xs:simpleType name="Int">
+    <xs:annotation>
+      <xs:documentation>A 32-bit integer.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:int"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="NonNegativeInt">
+    <xs:annotation>
+      <xs:documentation>An integer from 0 to 2147483647.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:int">
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="Natural">
+    <xs:annotation>
+      <xs:documentation>An integer from 0 to 4294967295.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:unsignedInt"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="IntFlag">
+    <xs:annotation>
+      <xs:documentation>0 is off, any other integer is on.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>1</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="xs:int">
+          <xs:enumeration value="0"/>
+          <xs:enumeration value="1"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:int"/>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+
+  <xs:simpleType name="GameMode">
+    <xs:annotation>
+      <xs:documentation>0 = Script (see script_name), 1 = Rounds, 2 = Time Attack, 3 = Team, 4 = Laps, 5 = Cup, 6 = Stunts.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;game_mode>0&lt;/game_mode></pre>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:int">
+      <xs:enumeration value="0"/>
+      <xs:enumeration value="1"/>
+      <xs:enumeration value="2"/>
+      <xs:enumeration value="3"/>
+      <xs:enumeration value="4"/>
+      <xs:enumeration value="5"/>
+      <xs:enumeration value="6"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="SettingType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="boolean"/>
+      <xs:enumeration value="integer"/>
+      <xs:enumeration value="real"/>
+      <xs:enumeration value="text"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  TmForever match settings XML schema (XSD 1.0, no target namespace)
+
+  Derived by static analysis of TmForever.exe (TrackMania Nations/United Forever)
+    version       2.11.26 (string in the binary, no version resource), x86
+    file date     2011-01-28
+    SHA-256       3847CF9F20BFC63914450060ED528C12104F743D96AD23D6E76ABD178DE8C84F
+
+  Covers match settings files (usually .txt): a playlist of tracks with game settings. They are
+  listed in the menus, and loaded by the dedicated server and the LoadMatchSettings XML-RPC
+  method.
+
+  Use:
+    <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:noNamespaceSchemaLocation="matchsettings.xsd">
+
+  How the engine handles a document:
+    * The root must be <playlist>. Otherwise the file is not loaded.
+    * Element names are case-sensitive. Children may be in any order.
+    * gameinfos, hotseat, filter and startindex are read once: if repeated, the first is used.
+      XSD 1.0 cannot limit them to one each next to any number of challenge elements, so
+      repeating them is not reported.
+    * Inside gameinfos, hotseat, filter and challenge, a repeated child is reported.
+    * Unknown elements and stray text are silently ignored. This schema reports them.
+    * A missing or empty value keeps its default. A number that cannot be read is 0.
+    * Numbers: whitespace anywhere is removed, then the leading integer is read and anything
+      after it is ignored. This schema accepts only an integer with surrounding whitespace.
+    * A value's text is that of the element's own text nodes. Text inside child elements is
+      ignored.
+
+  Sources in the binary (image base 00400000):
+    Load                 004b2560  CTrackManiaMatchSettings::LoadMatchSettingsXmlFile
+    Menus                004b27b0  CTrackManiaMatchSettings::LoadFromXml
+    Dedicated server     004b2c10  CTrackManiaMatchSettings::LoadMatchSettingsXmlFile_ForSded
+    challenge            004b23e0  ReadPlaylistFromXml
+    filter               004b1760  ReadFilterFromXml
+    gameinfos            004b1290  ReadGameInfoFromXml
+    hotseat              004b1920  ReadHotSeatFromXml
+    Save                 004b1a70  CTrackManiaMatchSettings::SaveMatchSettingsXmlFile
+    Values               0091f810 (text), 00901a00 (integer), 00900a40 (natural)
+    Meanings             XML-RPC method descriptions in the binary (SetGameMode, SetChatTime, ...)
+
+  Examples in xs:documentation:
+    They are HTML for the tooltips of XML language servers, which collapse whitespace.
+    Keep each on one line, with &#10; for a line break, &#32; for indentation and &lt; for "<".
+    An annotation on a declaration hides the one on its type. If a declaration has no text of
+    its own, put the example on the type instead.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+  <!-- ============================================================ Document element -->
+
+  <xs:element name="playlist" type="Playlist">
+    <xs:annotation>
+      <xs:documentation>Match settings: game settings and a list of tracks.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;playlist>&#10;&#32;&#32;&lt;gameinfos>&#10;&#32;&#32;&#32;&#32;&lt;game_mode>1&lt;/game_mode>&#10;&#32;&#32;&#32;&#32;&lt;timeattack_limit>300000&lt;/timeattack_limit>&#10;&#32;&#32;&lt;/gameinfos>&#10;&#32;&#32;&lt;challenge>&#10;&#32;&#32;&#32;&#32;&lt;file>Campaigns\Nations\White\A01-Race.Challenge.Gbx&lt;/file>&#10;&#32;&#32;&lt;/challenge>&#10;&lt;/playlist></pre>]]></xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:complexType name="Playlist">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="gameinfos" type="GameInfos">
+        <xs:annotation>
+          <xs:documentation>Game mode and its settings.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="hotseat" type="HotSeat">
+        <xs:annotation>
+          <xs:documentation>Settings for hotseat games.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="filter" type="Filter">
+        <xs:annotation>
+          <xs:documentation>Where the match settings are offered, their order in lists, and track order.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="startindex" type="Natural">
+        <xs:annotation>
+          <xs:documentation>Index of the first track to play, from 0. With random_map_order it is reset to 0. Default: 0.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;startindex>0&lt;/startindex></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="challenge" type="PlaylistItem">
+        <xs:annotation>
+          <xs:documentation>A track, played in document order.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;challenge>&#10;&#32;&#32;&lt;file>Campaigns\Nations\White\A01-Race.Challenge.Gbx&lt;/file>&#10;&#32;&#32;&lt;ident>ExampleTrackUid&lt;/ident>&#10;&lt;/challenge></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:choice>
+  </xs:complexType>
+
+  <!-- ============================================================ challenge -->
+
+  <xs:complexType name="PlaylistItem">
+    <!-- file, ident or both, in any order. Without either, the entry is skipped. -->
+    <xs:choice>
+      <xs:sequence>
+        <xs:group ref="ItemFile"/>
+        <xs:group ref="ItemIdent" minOccurs="0"/>
+      </xs:sequence>
+      <xs:sequence>
+        <xs:group ref="ItemIdent"/>
+        <xs:group ref="ItemFile" minOccurs="0"/>
+      </xs:sequence>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:group name="ItemFile">
+    <xs:sequence>
+      <xs:element name="file" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Path of the track file, with \ or /. The game writes it relative to the Tracks folder, with \.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;file>Campaigns\Nations\White\A01-Race.Challenge.Gbx&lt;/file></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+
+  <xs:group name="ItemIdent">
+    <xs:sequence>
+      <xs:element name="ident" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>UID of the track.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;ident>ExampleTrackUid&lt;/ident></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+
+  <!-- ============================================================ gameinfos -->
+
+  <xs:complexType name="GameInfos">
+    <xs:all>
+      <xs:element name="game_mode" type="GameMode" minOccurs="0"/>
+      <xs:element name="chat_time" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Duration of the podium after a race, in milliseconds. 0 shows no podium.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;chat_time>10000&lt;/chat_time></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="finishtimeout" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Rounds and Laps: time left to finish after the first player, in milliseconds. 0 is the default, 1 adapts to the length of the track.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;finishtimeout>1&lt;/finishtimeout></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="allwarmupduration" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Warm-up in all modes. 0 is none. Otherwise its duration, in rounds (Rounds and Team) or in multiples of the gold medal time (other modes).</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;allwarmupduration>0&lt;/allwarmupduration></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="disablerespawn" type="IntFlag" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Non-zero prevents players from respawning.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;disablerespawn>0&lt;/disablerespawn></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="forceshowallopponents" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Non-zero overrides the players' preferences and shows all opponents.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;forceshowallopponents>0&lt;/forceshowallopponents></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="rounds_pointslimit" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Rounds: points limit.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="rounds_usenewrules" type="IntFlag" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Rounds: non-zero uses the new rules.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="rounds_forcedlaps" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Rounds: number of laps on multilap tracks. 0 uses the track's own number.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="rounds_pointslimitnewrules" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Rounds: points limit with the new rules.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="team_pointslimit" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Team: points limit.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="team_maxpoints" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Team: maximum points per round.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="team_usenewrules" type="IntFlag" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Team: non-zero uses the new rules.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="team_pointslimitnewrules" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Team: points limit with the new rules.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="timeattack_limit" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Time Attack: time limit, in milliseconds.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;timeattack_limit>300000&lt;/timeattack_limit></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="timeattack_synchstartperiod" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Time Attack: synchronized start period.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="laps_nblaps" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Laps: number of laps.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="laps_timelimit" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Laps: time limit, in milliseconds.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="cup_pointslimit" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Cup: points needed for victory.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="cup_roundsperchallenge" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Cup: rounds before the next track.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="cup_nbwinners" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Cup: number of winners before the match is over.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="cup_warmupduration" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Cup: warm-up. 0 is none, otherwise its duration in rounds.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="comment" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Description of the match settings. The game reads it but never writes it.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <!-- ============================================================ hotseat -->
+
+  <xs:complexType name="HotSeat">
+    <xs:all>
+      <xs:element name="game_mode" type="GameMode" minOccurs="0"/>
+      <xs:element name="time_limit" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Time limit, in milliseconds. Replaces timeattack_limit.</xs:documentation>
+          <xs:documentation><![CDATA[Example:<pre>&lt;time_limit>300000&lt;/time_limit></pre>]]></xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="rounds_count" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Number of rounds.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="timeattack_limit" type="NonNegativeInt" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Legacy time limit, in minutes. 0 is ignored. time_limit takes precedence.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <!-- ============================================================ filter -->
+
+  <xs:complexType name="Filter">
+    <xs:all>
+      <xs:element name="is_lan" type="IntFlag" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Non-zero offers these match settings for LAN games.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="is_internet" type="IntFlag" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Non-zero offers these match settings for internet games.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="is_solo" type="IntFlag" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Non-zero offers these match settings for solo games.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="is_hotseat" type="IntFlag" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Non-zero offers these match settings for hotseat games.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="sort_index" type="Int" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Position in lists of match settings.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="random_map_order" type="IntFlag" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Non-zero shuffles the tracks when the file is loaded, and starts at the first.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="force_default_gamemode" type="IntFlag" minOccurs="0"/>
+    </xs:all>
+  </xs:complexType>
+
+  <!-- ============================================================ Value types -->
+
+  <xs:simpleType name="Int">
+    <xs:annotation>
+      <xs:documentation>A 32-bit integer.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:int"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="NonNegativeInt">
+    <xs:annotation>
+      <xs:documentation>An integer from 0 to 2147483647.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:int">
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="Natural">
+    <xs:annotation>
+      <xs:documentation>An integer from 0 to 4294967295.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:unsignedInt"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="IntFlag">
+    <xs:annotation>
+      <xs:documentation>0 is off, any other integer is on.</xs:documentation>
+      <xs:documentation><![CDATA[Example: <code>1</code>]]></xs:documentation>
+    </xs:annotation>
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="xs:int">
+          <xs:enumeration value="0"/>
+          <xs:enumeration value="1"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:int"/>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+
+  <xs:simpleType name="GameMode">
+    <xs:annotation>
+      <xs:documentation>0 = Rounds, 1 = Time Attack, 2 = Team, 3 = Laps, 4 = Stunts, 5 = Cup.</xs:documentation>
+      <xs:documentation><![CDATA[Example:<pre>&lt;game_mode>1&lt;/game_mode></pre>]]></xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:int">
+      <xs:enumeration value="0"/>
+      <xs:enumeration value="1"/>
+      <xs:enumeration value="2"/>
+      <xs:enumeration value="3"/>
+      <xs:enumeration value="4"/>
+      <xs:enumeration value="5"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

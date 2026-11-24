@@ -1,11 +1,11 @@
 # ManiaSchema
 
-XML schemas (XSD 1.0) for **Manialink** pages and **ManiaCode** files in TrackMania Forever and ManiaPlanet, and for ManiaPlanet's **MoodSetting** and **MoodBlender** files. They provide autocompletion, documentation and validation, and are derived from static analysis of the game executables.
+XML schemas (XSD 1.0) for **Manialink** pages, **ManiaCode** files and **match settings** in TrackMania Forever and ManiaPlanet, and for ManiaPlanet's **MoodSetting** and **MoodBlender** files. They provide autocompletion, documentation and validation, and are derived from static analysis of the game executables.
 
-| Game | Manialink | ManiaCode | MoodSetting | MoodBlender | Examples |
-| --- | --- | --- | --- | --- | --- |
-| TrackMania Forever (2.11.26) | [manialink.xsd](TmForever/manialink.xsd) | [maniacode.xsd](TmForever/maniacode.xsd) | | | [examples](TmForever/examples) |
-| ManiaPlanet (2019-11-19) | [manialink.xsd](ManiaPlanet/manialink.xsd) | [maniacode.xsd](ManiaPlanet/maniacode.xsd) | [moodsetting.xsd](ManiaPlanet/moodsetting.xsd) | [moodblender.xsd](ManiaPlanet/moodblender.xsd) | [examples](ManiaPlanet/examples) |
+| Game | Manialink | ManiaCode | Match settings | MoodSetting | MoodBlender | Examples |
+| --- | --- | --- | --- | --- | --- | --- |
+| TrackMania Forever (2.11.26) | [manialink.xsd](TmForever/manialink.xsd) | [maniacode.xsd](TmForever/maniacode.xsd) | [matchsettings.xsd](TmForever/matchsettings.xsd) | | | [examples](TmForever/examples) |
+| ManiaPlanet (2019-11-19) | [manialink.xsd](ManiaPlanet/manialink.xsd) | [maniacode.xsd](ManiaPlanet/maniacode.xsd) | [matchsettings.xsd](ManiaPlanet/matchsettings.xsd) | [moodsetting.xsd](ManiaPlanet/moodsetting.xsd) | [moodblender.xsd](ManiaPlanet/moodblender.xsd) | [examples](ManiaPlanet/examples) |
 
 ## Usage
 
