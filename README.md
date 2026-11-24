@@ -2,10 +2,14 @@
 
 XML schemas (XSD 1.0) for **Manialink** pages, **ManiaCode** files, **match settings** and **guest lists** in TrackMania Forever and ManiaPlanet, and for ManiaPlanet's **MoodSetting** and **MoodBlender** files. They provide autocompletion, documentation and validation, and are derived from static analysis of the game executables.
 
-| Game | Manialink | ManiaCode | Match settings | Guest list | MoodSetting | MoodBlender | Examples |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| TrackMania Forever (2.11.26) | [manialink.xsd](TmForever/manialink.xsd) | [maniacode.xsd](TmForever/maniacode.xsd) | [matchsettings.xsd](TmForever/matchsettings.xsd) | [guestlist.xsd](TmForever/guestlist.xsd) | | | [examples](TmForever/examples) |
-| ManiaPlanet (2019-11-19) | [manialink.xsd](ManiaPlanet/manialink.xsd) | [maniacode.xsd](ManiaPlanet/maniacode.xsd) | [matchsettings.xsd](ManiaPlanet/matchsettings.xsd) | [guestlist.xsd](ManiaPlanet/guestlist.xsd) | [moodsetting.xsd](ManiaPlanet/moodsetting.xsd) | [moodblender.xsd](ManiaPlanet/moodblender.xsd) | [examples](ManiaPlanet/examples) |
+| Format | Root element | TrackMania Forever (2.11.26) | ManiaPlanet (2019-11-19) |
+| --- | --- | --- | --- |
+| Manialink | `<manialink>` | [manialink.xsd](TmForever/manialink.xsd) · [examples](TmForever/examples/manialink) | [manialink.xsd](ManiaPlanet/manialink.xsd) · [examples](ManiaPlanet/examples/manialink) |
+| ManiaCode | `<maniacode>` | [maniacode.xsd](TmForever/maniacode.xsd) · [examples](TmForever/examples/maniacode) | [maniacode.xsd](ManiaPlanet/maniacode.xsd) · [examples](ManiaPlanet/examples/maniacode) |
+| Match settings | `<playlist>` | [matchsettings.xsd](TmForever/matchsettings.xsd) · [example](TmForever/examples/matchsettings) | [matchsettings.xsd](ManiaPlanet/matchsettings.xsd) · [example](ManiaPlanet/examples/matchsettings) |
+| Guest list | `<guestlist>` | [guestlist.xsd](TmForever/guestlist.xsd) · [example](TmForever/examples/guestlist) | [guestlist.xsd](ManiaPlanet/guestlist.xsd) · [example](ManiaPlanet/examples/guestlist) |
+| MoodSetting | `<Mood>` | - | [moodsetting.xsd](ManiaPlanet/moodsetting.xsd) · [examples](ManiaPlanet/examples/moodsetting) |
+| MoodBlender | `<MoodBlender>` | - | [moodblender.xsd](ManiaPlanet/moodblender.xsd) · [example](ManiaPlanet/examples/moodblender) |
 
 ## Usage
 
